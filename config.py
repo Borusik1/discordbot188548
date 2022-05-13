@@ -1,6 +1,0 @@
-settings = {
-	'TOKEN' : 'OTE3MDMwMjM4NTk1MjA3MTY4.Yayw9g.1rYs1KWblY90oTXxwGXPlsTXdOQ',
-	'NAME BOT' : 'UnrealBot#7476',
-	'ID': 917030238595207168,
-	'PREFIX' : '?'
-}
