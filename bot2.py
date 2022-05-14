@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import json
 import sqlite3
-from tabulate import tabulate
 from config import settings
 
 client = commands.Bot(command_prefix = settings['PREFIX'], intents = discord.Intents.all())
