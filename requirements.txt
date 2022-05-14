@@ -1,7 +1,7 @@
-git+https://github.com/Rapptz/discord.py
-git+https://github.com/python/cpython/tree/main/Lib/json
-git+https://github.com/coleifer/pysqlite3
-git+https://github.com/astanin/python-tabulate
+git+https://github.com/Rapptz/discord.py@rewrite
+git+https://github.com/python/cpython/tree/main/Lib/json@rewrite
+git+https://github.com/coleifer/pysqlite3@rewrite
+git+https://github.com/astanin/python-tabulate@rewrite
 PyNaCl==1.3.0
 pandas
 dnspython==1.16.0
