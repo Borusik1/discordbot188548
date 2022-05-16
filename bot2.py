@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import json
 import sqlite3
+from tabulate import tabulate
 from config import settings
 
 client = commands.Bot(command_prefix = settings['PREFIX'], intents = discord.Intents.all())
@@ -129,11 +130,14 @@ async def __add(ctx, member: discord.Member):
 		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0)")
 		connection.commit()
 	for row in cursor.execute(f"SELECT channel FROM counter where author={uid}"):
-		channel1 = row[0]
-		if channel.id == channel1:
-			user= await client.fetch_user(member.id)
-			await channel.set_permissions(user, read_messages=True, send_messages=True, view_channel=True)
-			await channel.send(f"Здравствуйте <@{member.id}>.",embed=discord.Embed(description=f"**Участник <@{member.id}> успешно добавлен в <#{channel.id}>.**"))
+		channel1id = row[0]
+		channel1 = client.get_channel(channel1id)
+		user= await client.fetch_user(member.id)
+		await channel1.set_permissions(user, read_messages=True, send_messages=True, view_channel=True)
+		for guild in client.guilds:
+			role = guild.get_role(936505743987867659)
+			await member.add_roles(role)
+		await ctx.send(f"Здравствуйте <@{member.id}>.",embed=discord.Embed(description=f"**Участник <@{member.id}> успешно добавлен в <#{channel1.id}>.**"))
 
 @client.command(aliases=["del", "-"])
 @commands.has_role(933672340150165714 or 926469565343477760)
@@ -145,11 +149,14 @@ async def __del(ctx, member: discord.Member):
 		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0)")
 		connection.commit()
 	for row in cursor.execute(f"SELECT channel FROM counter where author={uid}"):
-		channel1 = row[0]
-		if channel.id == channel1:
-			user= await client.fetch_user(member.id)
-			await channel.set_permissions(user, read_messages=False, send_messages=False, view_channel=False)
-			await channel.send(embed=discord.Embed(description=f"**Участник <@{member.id}> успешно удалён из <#{channel.id}>.**"))
+		channel1id = row[0]
+		channel1 = client.get_channel(channel1id)
+		user= await client.fetch_user(member.id)
+		await channel1.set_permissions(user, read_messages=False, send_messages=False, view_channel=False)
+		for guild in client.guilds:
+			role = guild.get_role(936505743987867659)
+			await member.remove_roles(role)
+		await ctx.send(embed=discord.Embed(description=f"**Участник <@{member.id}> успешно удалён из <#{channel1.id}>.**"))
 
 @client.command(aliases=["close"])
 @commands.has_role(933672340150165714 or 926469565343477760)
@@ -164,6 +171,33 @@ async def __close(ctx):
 		channel1 = row[0]
 		if channel.id == channel1:
 			await channel.delete()
+
+@client.command(aliases=["vip", "вип"])
+@commands.has_role(933672340150165714 or 926469565343477760)
+async def __vip(ctx):
+	await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в адопте: [Нажми сюда что-бы зайти](https://www.roblox.com/games/920587237?privateServerLinkCode=41122651371977856802806669923465)**"))
+
+@client.command(aliases=["vipmm", "випмм2", "vipmm2","випмм"])
+@commands.has_role(933672340150165714 or 926469565343477760)
+async def __vipmm2(ctx):
+	await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в мардер мистери: [Нажми сюда что-бы зайти](https://www.roblox.com/games/142823291?privateServerLinkCode=89852226291968909722581151698927)**"))
+
+@client.command(aliases=["vippsx", "виппсх", "виппетсим","vipps","виппет"])
+@commands.has_role(933672340150165714 or 926469565343477760)
+async def __vippsx(ctx):
+	await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в пет симулятор X: [Нажми сюда что-бы зайти](https://www.roblox.com/games/6284583030/x3-Pet-Simulator-X?privateServerLinkCode=55975160176260713274764851250283)**"))
+
+@client.command(aliases=["check"])
+@commands.has_role(933672340150165714 or 926469565343477760)
+async def __check(ctx):
+	await ctx.reply(embed=discord.Embed(description=f"**Проверить свой пендинг: [Нажми сюда что-бы проверить](https://www.roblox.com/transactions)**"))
+
+@client.command(aliases=["tutorial", "туториал"])
+@commands.has_role(933672340150165714 or 926469565343477760)
+async def __tutorial(ctx):
+	embed = discord.Embed(description=f"**Туториал как настроить вип:**")
+	embed.set_image(url = "https://rblx.ru/images/roblox_buy.gif")
+	await ctx.reply(embed=embed)
 
 @client.command(aliases = ['$', 'cash', 'balance', 'баланс', 'деньги', 'бал'])
 async def __balance(ctx, member: discord.Member = None):
