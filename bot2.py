@@ -139,14 +139,24 @@ async def __claim(ctx):
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def __add(ctx, member: discord.Member):
 	uid = ctx.author.id
-	channel = client.get_channel(ctx.channel.id)
+	guild = ctx.message.guild
 	cursor.execute(f"SELECT author FROM counter where author={uid}")
 	if cursor.fetchone() == None:
 		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0)")
 		connection.commit()
 	for row in cursor.execute(f"SELECT channel FROM counter where author={uid}"):
 		channel1id = row[0]
-		channel1 = client.get_channel(channel1id)
+
+		try:
+			guild = ctx.message.guild
+			channel1 = guild.get_channel(channel1id)
+			user= await client.fetch_user(uid)
+			await channel1.set_permissions(user, read_messages=True, send_messages=True, view_channel=True, manage_channels=True)
+		except:
+			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid}")
+			connection.commit()
+
+		channel1 = guild.get_channel(channel1id)
 		user= await client.fetch_user(member.id)
 		await channel1.set_permissions(user, read_messages=True, send_messages=True, view_channel=True)
 		try:
@@ -159,6 +169,7 @@ async def __add(ctx, member: discord.Member):
 @client.command(aliases=["del", "-"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def __del(ctx, member: discord.Member):
+	guild = ctx.message.guild
 	uid = ctx.author.id
 	channel = client.get_channel(ctx.channel.id)
 	cursor.execute(f"SELECT author FROM counter where author={uid}")
@@ -167,6 +178,14 @@ async def __del(ctx, member: discord.Member):
 		connection.commit()
 	for row in cursor.execute(f"SELECT channel FROM counter where author={uid}"):
 		channel1id = row[0]
+		try:
+			guild = ctx.message.guild
+			channel1 = guild.get_channel(channel1id)
+			user= await client.fetch_user(uid)
+			await channel1.set_permissions(user, read_messages=True, send_messages=True, view_channel=True, manage_channels=True)
+		except:
+			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid}")
+			connection.commit()
 		channel1 = client.get_channel(channel1id)
 		user= await client.fetch_user(member.id)
 		await channel1.set_permissions(user, read_messages=False, send_messages=False, view_channel=False)
@@ -189,6 +208,14 @@ async def __close(ctx):
 		connection.commit()
 	for row in cursor.execute(f"SELECT channel FROM counter where author={uid}"):
 		channel1id = row[0]
+		try:
+			guild = ctx.message.guild
+			channel1 = guild.get_channel(channel1id)
+			user= await client.fetch_user(uid)
+			await channel1.set_permissions(user, read_messages=True, send_messages=True, view_channel=True, manage_channels=True)
+		except:
+			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid}")
+			connection.commit()
 		channel1 = guild.get_channel(channel1id)
 		await channel1.delete()
 		
