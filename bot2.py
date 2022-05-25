@@ -4,10 +4,10 @@ import json
 import sqlite3
 from tabulate import tabulate
 from config import settings
+from asyncio import sleep
 
 client = commands.Bot(command_prefix = settings['PREFIX'], intents = discord.Intents.all())
-client.remove_command('help')
-
+client.remove_command("help")
 connection = sqlite3.connect('server.db')
 cursor = connection.cursor()
 
@@ -41,6 +41,8 @@ for row in cursor.execute("SELECT * FROM counter"):
 @client.event
 async def on_ready():
 	print("Bot Has been runned")
+	game = discord.Game("?help")
+	await client.change_presence(activity=game)
 	for guild in client.guilds:
 		for member in guild.members:
 			cursor.execute(f"SELECT id FROM users where id={member.id}")
@@ -54,9 +56,9 @@ async def on_ready():
 connection.commit()
 
 
-@client.command(aliases=["set_wave_channel"])
+@client.command()
 @commands.has_role(933672340150165714)
-async def __set_wave_channel(ctx, channel):
+async def set_wave_channel(ctx, channel):
 	cursor.execute("SELECT id FROM status where id=1")
 	if cursor.fetchone()==None:
 		cursor.execute(f"INSERT INTO status VALUES (?, ?, ?)",(1, False, 0))
@@ -100,9 +102,9 @@ async def setup(ctx):
         ])
 
 
-@client.command(aliases=["claim", "create"])
+@client.command(aliases=["create"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
-async def __claim(ctx):
+async def claim(ctx):
 	uid = ctx.author.id
 	cursor.execute(f"SELECT author FROM counter where author={uid}")
 	if cursor.fetchone() == None:
@@ -135,9 +137,9 @@ async def __claim(ctx):
 			await ctx.send(embed=discord.Embed(description=f"**Тикет <#{channel.id}> успешно создан <@{ctx.author.id}>**"))
 			await channel.send(embed=discord.Embed(description=f"**Тикет успешно создан <@{ctx.author.id}>**"))
 
-@client.command(aliases=["add", "+"])
+@client.command(aliases=["+"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
-async def __add(ctx, member: discord.Member):
+async def add(ctx, member: discord.Member):
 	uid = ctx.author.id
 	guild = ctx.message.guild
 	cursor.execute(f"SELECT author FROM counter where author={uid}")
@@ -168,7 +170,7 @@ async def __add(ctx, member: discord.Member):
 
 @client.command(aliases=["del", "-"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
-async def __del(ctx, member: discord.Member):
+async def delete(ctx, member: discord.Member):
 	guild = ctx.message.guild
 	uid = ctx.author.id
 	channel = client.get_channel(ctx.channel.id)
@@ -196,9 +198,9 @@ async def __del(ctx, member: discord.Member):
 			pass
 		await channel1.send(embed=discord.Embed(description=f"**Участник <@{member.id}> успешно удалён из <#{channel1.id}>.**"))
 
-@client.command(aliases=["close"])
+@client.command()
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
-async def __close(ctx):
+async def close(ctx):
 	uid = ctx.author.id
 	guild = ctx.message.guild
 	channel = guild.get_channel(ctx.channel.id)
@@ -220,35 +222,35 @@ async def __close(ctx):
 		await channel1.delete()
 		
 
-@client.command(aliases=["vip", "вип"])
+@client.command(aliases=["вип"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
-async def __vip(ctx):
+async def vip(ctx):
 	await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в адопте: [Нажми сюда что-бы зайти](https://www.roblox.com/games/920587237?privateServerLinkCode=41122651371977856802806669923465)**"))
 
-@client.command(aliases=["vipmm", "випмм2", "vipmm2","випмм"])
+@client.command(aliases=["vipmm", "випмм2", "випмм"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
-async def __vipmm2(ctx):
+async def vipmm2(ctx):
 	await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в мардер мистери: [Нажми сюда что-бы зайти](https://www.roblox.com/games/142823291?privateServerLinkCode=89852226291968909722581151698927)**"))
 
-@client.command(aliases=["vippsx", "виппсх", "виппетсим","vipps","виппет"])
+@client.command(aliases=["виппсх", "виппетсим","vipps","виппет"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
-async def __vippsx(ctx):
+async def vippsx(ctx):
 	await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в пет симулятор X: [Нажми сюда что-бы зайти](https://www.roblox.com/games/6284583030/x3-Pet-Simulator-X?privateServerLinkCode=55975160176260713274764851250283)**"))
 
-@client.command(aliases=["check"])
+@client.command()
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
-async def __check(ctx):
+async def check(ctx):
 	await ctx.reply(embed=discord.Embed(description=f"**Проверить свой пендинг: [Нажми сюда что-бы проверить](https://www.roblox.com/transactions)**"))
 
-@client.command(aliases=["tutorial", "туториал"])
+@client.command(aliases=["туториал"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
-async def __tutorial(ctx):
+async def tutorial(ctx):
 	embed = discord.Embed(description=f"**Туториал как настроить вип:**")
 	embed.set_image(url = "https://rblx.ru/images/roblox_buy.gif")
 	await ctx.reply(embed=embed)
 
-@client.command(aliases = ['$', 'cash', 'balance', 'баланс', 'деньги', 'бал'])
-async def __balance(ctx, member: discord.Member = None):
+@client.command(aliases = ['$', 'cash', 'баланс', 'деньги', 'бал'])
+async def balance(ctx, member: discord.Member = None):
 	if member is None:
 		uid=ctx.author.id
 		cursor.execute(f'SELECT id FROM users where id={uid}')
@@ -267,8 +269,8 @@ async def __balance(ctx, member: discord.Member = None):
 		for row in cursor.execute(f"SELECT cash FROM users WHERE id = {uid}"):
 			cash = row[0]
 			await ctx.reply(f'Баланс данного пользователя составляет **{cash}**<:coinGartex:957170467716857866>')
-@client.command(aliases = ['daily', 'timely'])
-async def __timely(ctx):
+@client.command(aliases = ['daily'])
+async def timely(ctx):
 	uid=ctx.author.id
 	cursor.execute(f'SELECT id FROM users where id={uid}')
 	if cursor.fetchone() is None:
@@ -280,6 +282,8 @@ async def __timely(ctx):
 		cursor.execute(f'UPDATE users SET cash={cash} where id={uid}')
 		await ctx.send('Ты получил 10<:coinGartex:957170467716857866> поздравляю!')
 		connection.commit()
-
+@client.command()
+async def help(ctx):
+	await ctx.send(f"**Для работы всех этих команд нужно иметь роль с названием '👨‍👧‍👦 | Посредник' с эмодзи:**\n?claim - создать сделку\n?add [@Участник | ID] - добавить участника в сделку\n?del [@Участник | ID] - удалить участника со сделки\n?close - закрыть сделку\n?vip - випка в адопте\n?vipmm2 - випка в мм2\n?vippsx - випка в псх\n?check - проверить пендинг\n?tutorial - показать как настроить випку")
 
 client.run(settings['TOKEN'])
