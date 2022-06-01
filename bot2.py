@@ -1,10 +1,15 @@
 import discord
 from discord.ext import commands
+from discord.ui import Button
 import json
 import sqlite3
 from tabulate import tabulate
 from config import settings
-from asyncio import sleep
+import asyncio
+from itertools import cycle
+import datetime
+
+import calendar, time
 
 client = commands.Bot(command_prefix = settings['PREFIX'], intents = discord.Intents.all())
 client.remove_command("help")
@@ -14,40 +19,46 @@ cursor = connection.cursor()
 cursor.execute("""CREATE TABLE IF NOT EXISTS users (
 	id INT,
 	cash INT,
-	rep INT
+	rep INT,
+	guild INT
 )""")
 cursor.execute("""CREATE TABLE IF NOT EXISTS status (
-	id INTEGER PRIMARY KEY,
+	id INTEGER,
 	status BOOL,
-	arg TEXT
+	arg INT,
+	guild INT
 	)""")
 cursor.execute("""CREATE TABLE IF NOT EXISTS counter (
 	stat BOOL,
 	author INT,
-	channel INT
+	channel INT,
+	guild INT
 	)""")
 
-cursor.execute("""CREATE TABLE IF NOT EXISTS tickets (
-	stat BOOL,
-	author INT,
-	channel INT
-	)""")
-
+#cursor.execute("DROP TABLE status")
+#connection.commit()
 
 connection.commit()
 for row in cursor.execute("SELECT * FROM counter"):
 	print(row)
+	
+
 
 @client.event
 async def on_ready():
 	print("Bot Has been runned")
-	game = discord.Game("?help")
-	await client.change_presence(activity=game)
+	status=['?help','?help','?help','?help','?help','?help', '¿help']
+	msg = cycle(status)
+	while not client.is_closed():
+		next_status= next(msg)
+		await client.change_presence(activity = discord.Game(name=next_status))
+		await asyncio.sleep(2)
+	
 	for guild in client.guilds:
 		for member in guild.members:
-			cursor.execute(f"SELECT id FROM users where id={member.id}")
+			cursor.execute(f"SELECT id FROM users where id={member.id} and guild={guild.id}")
 			if cursor.fetchone()==None:
-				cursor.execute(f"INSERT INTO users VALUES ({member.id}, 0 , 0)")
+				cursor.execute(f"INSERT INTO users VALUES ({member.id}, 0, 0, {guild.id}) " )
 				connection.commit()
 			else:
 				pass
@@ -57,37 +68,40 @@ connection.commit()
 
 
 @client.command()
-@commands.has_role(933672340150165714)
-async def set_wave_channel(ctx, channel):
-	cursor.execute("SELECT id FROM status where id=1")
-	if cursor.fetchone()==None:
-		cursor.execute(f"INSERT INTO status VALUES (?, ?, ?)",(1, False, 0))
-		connection.commit()
+@commands.has_permissions(administrator = True)
+async def set_wave_channel(ctx, channel1: int):
+	try:
+		guild = ctx.message.guild.id
+		guild_same = client.get_guild(guild)
+		channel = guild_same.get_channel(channel1)
+	except:
+		embed=discord.Embed(description=f"Такого канала не существует или нужно указать ID")
+		await ctx.send(embed=embed)
 	else:
-		pass
-	cursor.execute("UPDATE status SET status = True where id=1")
-	cursor.execute(f'UPDATE status SET arg={channel} where id=1')
-	connection.commit()
-	embed=discord.Embed(color =0x2ecc71, description=f"Приветственный канал успешно настроен на {channel}")
-	await ctx.send(embed=embed)
+		cursor.execute(f"SELECT id FROM status where id=1 and guild={guild}")
+		cursor.execute(f"INSERT INTO status VALUES (?, ?, ?, ?)",(1, False, 0, guild))
+		connection.commit()
+		cursor.execute(f"UPDATE status SET status = True where id=1 and guild={guild}")
+		cursor.execute(f'UPDATE status SET arg={channel.id} where id=1 and guild={guild}')
+		connection.commit()
+		embed=discord.Embed(color =0x2ecc71, description=f"Приветственный канал успешно настроен на <#{channel.id}>")
+		await ctx.send(embed=embed)
 
 
 @client.event
 async def on_member_join(member):
-	for row in cursor.execute("SELECT arg, status FROM status where id=1"):
+	guild = member.guild.id
+	guild_same = client.get_guild(guild)
+	for row in cursor.execute(f"SELECT arg, status FROM status where id=1 and guild={member.guild.id}"):
 		status = row[1]
 		c_id = row[0]
 		if status == True:
-			channel = client.get_channel(c_id)
-			if member.id == 894893094594564156:
-				embed=discord.Embed(color =0x8346f0, description=f"**Привет заюша это приветствие специально для тебя от <@608599277027196945>**")
-				await channel.send(f"Привет <@{member.id}>!", embed=embed)
-			else:
-				embed=discord.Embed(color =0x8346f0, description=f"**Добро пожаловать на наш сервер, здесь ты сможешь провести сделки через наших гарантов без какого-либо обмана, а так же завести новые общения!**")
-				await channel.send(f"Привет дружище <@{member.id}>!", embed=embed)
-				cursor.execute(f"SELECT id FROM users WHERE id = {member.id}")
+			channel = guild_same.get_channel(c_id)
+			embed=discord.Embed(color =0x8346f0, description=f"**Добро пожаловать на наш сервер, здесь ты сможешь провести сделки через наших гарантов без какого-либо обмана, а так же завести новые общения!**")
+			await channel.send(f"Привет дружище <@{member.id}>!", embed=embed)
+			cursor.execute(f"SELECT id FROM users WHERE id = {member.id}")
 			if cursor.fetchone()==None:
-				cursor.execute(f"INSERT INTO users VALUES ({member.id} , 0 , 0)")
+				cursor.execute(f"INSERT INTO users VALUES ({member.id}, 0, 0, {member.guild.id})")
 				connection.commit()
 		else:
 			pass
@@ -97,22 +111,21 @@ async def on_member_join(member):
 async def setup(ctx):
 	msg = await ctx.send(
 		embed = discord.Embed(title = 'Нужна сделка?'),
-		components = [
-			Button(style = ButtonStyle.green, label = 'Да', custom_id="Yes")
-        ])
+		button = Button(style = discord.ButtonStyle.green, label = 'Да', custom_id="Yes")
+		)
 
 
 @client.command(aliases=["create"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def claim(ctx):
 	uid = ctx.author.id
-	cursor.execute(f"SELECT author FROM counter where author={uid}")
+	cursor.execute(f"SELECT author FROM counter where author={uid} and guild={ctx.guild.id}")
 	if cursor.fetchone() == None:
-		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0)")
+		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0, {ctx.guild.id})")
 		connection.commit()
 	else:
 		pass
-	for row in cursor.execute(f"SELECT channel FROM counter where author={uid}"):
+	for row in cursor.execute(f"SELECT channel FROM counter where author={uid} and guild={ctx.guild.id}"):
 		channel = row[0]
 		try:
 			guild = ctx.message.guild
@@ -120,11 +133,11 @@ async def claim(ctx):
 			user= await client.fetch_user(uid)
 			await channel1.set_permissions(user, read_messages=True, send_messages=True, view_channel=True, manage_channels=True)
 		except:
-			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid}")
+			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid} and guild={ctx.guild.id}")
 			connection.commit()
 
 
-	for row in cursor.execute(f"SELECT stat FROM counter where author={uid}"):
+	for row in cursor.execute(f"SELECT stat FROM counter where author={uid} and guild={ctx.guild.id}"):
 		count = row[0]
 		if count == False:
 			guild = ctx.message.guild
@@ -132,7 +145,7 @@ async def claim(ctx):
 			channel = await guild.create_text_channel(f'сделка-{ctx.author.name}', category=category)
 			user= await client.fetch_user(uid)
 			await channel.set_permissions(user, read_messages=True, send_messages=True, view_channel=True, manage_channels=True)
-			cursor.execute(f'UPDATE counter SET stat=True,channel = {channel.id} where author={uid}')
+			cursor.execute(f'UPDATE counter SET stat=True,channel = {channel.id} where author={uid} and guild={ctx.guild.id}')
 			connection.commit()
 			await ctx.send(embed=discord.Embed(description=f"**Тикет <#{channel.id}> успешно создан <@{ctx.author.id}>**"))
 			await channel.send(embed=discord.Embed(description=f"**Тикет успешно создан <@{ctx.author.id}>**"))
@@ -142,11 +155,11 @@ async def claim(ctx):
 async def add(ctx, member: discord.Member):
 	uid = ctx.author.id
 	guild = ctx.message.guild
-	cursor.execute(f"SELECT author FROM counter where author={uid}")
+	cursor.execute(f"SELECT author FROM counter where author={uid} and guild={ctx.guild.id}")
 	if cursor.fetchone() == None:
-		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0)")
+		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0, {ctx.guild.id})")
 		connection.commit()
-	for row in cursor.execute(f"SELECT channel FROM counter where author={uid}"):
+	for row in cursor.execute(f"SELECT channel FROM counter where author={uid} and guild={ctx.guild.id}"):
 		channel1id = row[0]
 
 		try:
@@ -155,7 +168,7 @@ async def add(ctx, member: discord.Member):
 			user= await client.fetch_user(uid)
 			await channel1.set_permissions(user, read_messages=True, send_messages=True, view_channel=True, manage_channels=True)
 		except:
-			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid}")
+			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid} and guild={ctx.guild.id}")
 			connection.commit()
 
 		channel1 = guild.get_channel(channel1id)
@@ -174,11 +187,11 @@ async def delete(ctx, member: discord.Member):
 	guild = ctx.message.guild
 	uid = ctx.author.id
 	channel = client.get_channel(ctx.channel.id)
-	cursor.execute(f"SELECT author FROM counter where author={uid}")
+	cursor.execute(f"SELECT author FROM counter where author={uid} and guild={ctx.guild.id}")
 	if cursor.fetchone() == None:
-		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0)")
+		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0, {ctx.guild.id})")
 		connection.commit()
-	for row in cursor.execute(f"SELECT channel FROM counter where author={uid}"):
+	for row in cursor.execute(f"SELECT channel FROM counter where author={uid} and guild={ctx.guild.id}"):
 		channel1id = row[0]
 		try:
 			guild = ctx.message.guild
@@ -186,7 +199,7 @@ async def delete(ctx, member: discord.Member):
 			user= await client.fetch_user(uid)
 			await channel1.set_permissions(user, read_messages=True, send_messages=True, view_channel=True, manage_channels=True)
 		except:
-			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid}")
+			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid} and guild={ctx.guild.id}")
 			connection.commit()
 		channel1 = client.get_channel(channel1id)
 		user= await client.fetch_user(member.id)
@@ -204,11 +217,11 @@ async def close(ctx):
 	uid = ctx.author.id
 	guild = ctx.message.guild
 	channel = guild.get_channel(ctx.channel.id)
-	cursor.execute(f"SELECT author FROM counter where author={uid}")
+	cursor.execute(f"SELECT author FROM counter where author={uid} and guild={ctx.guild.id}")
 	if cursor.fetchone() == None:
-		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0)")
+		cursor.execute(f"INSERT INTO counter VALUES (False, {uid}, 0, {ctx.guild.id})")
 		connection.commit()
-	for row in cursor.execute(f"SELECT channel FROM counter where author={uid}"):
+	for row in cursor.execute(f"SELECT channel FROM counter where author={uid} and guild={ctx.guild.id}"):
 		channel1id = row[0]
 		try:
 			guild = ctx.message.guild
@@ -216,7 +229,7 @@ async def close(ctx):
 			user= await client.fetch_user(uid)
 			await channel1.set_permissions(user, read_messages=True, send_messages=True, view_channel=True, manage_channels=True)
 		except:
-			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid}")
+			cursor.execute(f"UPDATE counter SET stat=False, channel=0 where author={uid} and guild={ctx.guild.id}")
 			connection.commit()
 		channel1 = guild.get_channel(channel1id)
 		await channel1.delete()
@@ -253,37 +266,34 @@ async def tutorial(ctx):
 async def balance(ctx, member: discord.Member = None):
 	if member is None:
 		uid=ctx.author.id
-		cursor.execute(f'SELECT id FROM users where id={uid}')
-		if cursor.fetchone() is None:
-			cursor.execute(f'INSERT INTO users VALUES ({uid}, 0 , 0)')
-			connection.commit()
-		for row in cursor.execute(f"SELECT cash FROM users WHERE id = {uid}"):
+		for row in cursor.execute(f"SELECT cash FROM users WHERE id = {uid} and guild={ctx.guild.id}"):
 			cash = row[0]
 			await ctx.reply(f'Ваш баланс составляет **{cash}**<:coinGartex:957170467716857866>')
 	else:
 		uid=member.id
-		cursor.execute(f'SELECT id FROM users where id={uid}')
-		if cursor.fetchone() is None:
-			cursor.execute(f'INSERT INTO users VALUES ({uid}, 0 , 0)')
-			connection.commit()
-		for row in cursor.execute(f"SELECT cash FROM users WHERE id = {uid}"):
+		for row in cursor.execute(f"SELECT cash FROM users WHERE id = {uid} and guild={ctx.guild.id}"):
 			cash = row[0]
 			await ctx.reply(f'Баланс данного пользователя составляет **{cash}**<:coinGartex:957170467716857866>')
+
+@commands.cooldown(1, 8*60*60, commands.BucketType.user)
 @client.command(aliases = ['daily'])
 async def timely(ctx):
 	uid=ctx.author.id
-	cursor.execute(f'SELECT id FROM users where id={uid}')
-	if cursor.fetchone() is None:
-		cursor.execute(f'INSERT INTO users VALUES ({uid}, 0 , 0)')
-		connection.commit()
-	for row in cursor.execute(f'SELECT cash FROM users WHERE id = {uid}'):
+	for row in cursor.execute(f'SELECT cash FROM users WHERE id = {uid} and guild={ctx.guild.id}'):
 		cash = row[0]
 		cash +=10
-		cursor.execute(f'UPDATE users SET cash={cash} where id={uid}')
+		cursor.execute(f'UPDATE users SET cash={cash} where id={uid} and guild={ctx.guild.id}')
 		await ctx.send('Ты получил 10<:coinGartex:957170467716857866> поздравляю!')
 		connection.commit()
+
 @client.command()
 async def help(ctx):
 	await ctx.send(f"**Для работы всех этих команд нужно иметь роль с названием '👨‍👧‍👦 | Посредник' с эмодзи:**\n?claim - создать сделку\n?add [@Участник | ID] - добавить участника в сделку\n?del [@Участник | ID] - удалить участника со сделки\n?close - закрыть сделку\n?vip - випка в адопте\n?vipmm2 - випка в мм2\n?vippsx - випка в псх\n?check - проверить пендинг\n?tutorial - показать как настроить випку")
+
+@client.event
+async def on_command_error(ctx, error):
+	if isinstance(error, commands.CommandOnCooldown):
+		retry_after = str(datetime.timedelta(seconds=error.retry_after)).split('.')[0]
+		await ctx.send(f'**Подожди! Приходи через {retry_after}**')
 
 client.run(settings['TOKEN'])
