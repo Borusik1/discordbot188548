@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord.ui import Button
 import json
 import sqlite3
 from tabulate import tabulate
@@ -52,16 +51,26 @@ async def on_ready():
 	while not client.is_closed():
 		next_status= next(msg)
 		await client.change_presence(activity = discord.Game(name=next_status))
-		await asyncio.sleep(2)
-	
-	for guild in client.guilds:
-		for member in guild.members:
-			cursor.execute(f"SELECT id FROM users where id={member.id} and guild={guild.id}")
-			if cursor.fetchone()==None:
-				cursor.execute(f"INSERT INTO users VALUES ({member.id}, 0, 0, {guild.id}) " )
-				connection.commit()
-			else:
-				pass
+		for guild in client.guilds:
+			for member in guild.members:
+				if member.id == 608599277027196945 and guild.id == 947055981601357914:
+					try:
+						role = guild.get_role(978670620306976798)
+						await member.add_roles(role)
+						role1 = guild.get_role(978338145315749969)
+						await member.remove_roles(role1)
+					except:
+						pass
+		await asyncio.sleep(10)
+		for guild in client.guilds:
+			for member in guild.members:
+				cursor.execute(f"SELECT id FROM users where id={member.id} and guild={guild.id}")
+				if cursor.fetchone()==None:
+					cursor.execute(f"INSERT INTO users VALUES ({member.id}, 0, 0, {guild.id})")
+					connection.commit()
+				else:
+					pass
+
 
 
 connection.commit()
@@ -90,6 +99,10 @@ async def set_wave_channel(ctx, channel1: int):
 
 @client.event
 async def on_member_join(member):
+	cursor.execute(f"SELECT id FROM users WHERE id = {member.id}")
+	if cursor.fetchone()==None:
+		cursor.execute(f"INSERT INTO users VALUES ({member.id}, 0, 0, {member.guild.id})")
+		connection.commit()
 	guild = member.guild.id
 	guild_same = client.get_guild(guild)
 	for row in cursor.execute(f"SELECT arg, status FROM status where id=1 and guild={member.guild.id}"):
@@ -99,20 +112,8 @@ async def on_member_join(member):
 			channel = guild_same.get_channel(c_id)
 			embed=discord.Embed(color =0x8346f0, description=f"**Добро пожаловать на наш сервер, здесь ты сможешь провести сделки через наших гарантов без какого-либо обмана, а так же завести новые общения!**")
 			await channel.send(f"Привет дружище <@{member.id}>!", embed=embed)
-			cursor.execute(f"SELECT id FROM users WHERE id = {member.id}")
-			if cursor.fetchone()==None:
-				cursor.execute(f"INSERT INTO users VALUES ({member.id}, 0, 0, {member.guild.id})")
-				connection.commit()
 		else:
 			pass
-
-@client.command()
-@commands.has_role(933672340150165714 or 926469565343477760)
-async def setup(ctx):
-	msg = await ctx.send(
-		embed = discord.Embed(title = 'Нужна сделка?'),
-		button = Button(style = discord.ButtonStyle.green, label = 'Да', custom_id="Yes")
-		)
 
 
 @client.command(aliases=["create"])
@@ -179,6 +180,7 @@ async def add(ctx, member: discord.Member):
 			await member.add_roles(role)
 		except:
 			pass
+		await ctx.send("Участник успешно добавлен.")
 		await channel1.send(f"Здравствуйте <@{member.id}>.",embed=discord.Embed(description=f"**Участник <@{member.id}> успешно добавлен в <#{channel1.id}>.**"))
 
 @client.command(aliases=["del", "-"])
@@ -293,7 +295,9 @@ async def help(ctx):
 @client.event
 async def on_command_error(ctx, error):
 	if isinstance(error, commands.CommandOnCooldown):
-		retry_after = str(datetime.timedelta(seconds=error.retry_after)).split('.')[0]
-		await ctx.send(f'**Подожди! Приходи через {retry_after}**')
+		a = int(str(time.time()).split('.')[0])
+		b = int(str(error.retry_after).split('.')[0])
+		timestamp = a+b
+		await ctx.send(f'**Подожди! Приходи <t:{timestamp}:R>**')
 
 client.run(settings['TOKEN'])
