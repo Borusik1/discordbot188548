@@ -11,6 +11,7 @@ import psycopg2
 import calendar, time
 
 
+
 connection = psycopg2.connect(settings["DB_URI"], sslmode="require")
 cursor = connection.cursor()
 client = commands.Bot(command_prefix = settings["PREFIX"], intents = discord.Intents.all())
