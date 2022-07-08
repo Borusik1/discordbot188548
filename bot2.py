@@ -9,10 +9,11 @@ import datetime
 import re
 import psycopg2
 import calendar, time
+import os
+from boto.s3.connection import S3Connection
 
-
-
-connection = psycopg2.connect(settings["DB_URI"], sslmode="require")
+s3 = S3Connection(os.environ['DATABASE_URL'])
+connection = psycopg2.connect(s3, sslmode="require")
 cursor = connection.cursor()
 client = commands.Bot(command_prefix = settings["PREFIX"], intents = discord.Intents.all())
 client.remove_command("help")
