@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord_slash import SlashCommand, SlashContext
 import json
 from tabulate import tabulate
 from config import settings
@@ -15,7 +14,6 @@ import calendar, time
 connection = psycopg2.connect(settings["DB_URI"], sslmode="require")
 cursor = connection.cursor()
 client = commands.Bot(command_prefix = settings["PREFIX"], intents = discord.Intents.all())
-slash = SlashCommand(client)
 client.remove_command("help")
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -77,7 +75,7 @@ async def on_ready():
 connection.commit()
 
 
-@slash.slash(name="set channel")
+@client.command()
 @commands.has_permissions(administrator = True)
 async def set_channel(ctx: SlashContext, channel1):
 	try:
