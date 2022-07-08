@@ -312,7 +312,6 @@ async def close(ctx):
 				await ctx.send(embed=discord.Embed(description=f"**У тебя нет роли <@&{role.id}>**"))
 
 @client.command(aliases=["вип"])
-@commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def vip(ctx):
 	guild = ctx.message.guild
 	cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
@@ -330,7 +329,6 @@ async def vip(ctx):
 				await ctx.send(embed=discord.Embed(description=f"**У тебя нет роли <@&{role.id}>**"))
 
 @client.command(aliases=["vipmm", "випмм2", "випмм"])
-@commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def vipmm2(ctx):
 	guild = ctx.message.guild
 	cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
@@ -348,7 +346,6 @@ async def vipmm2(ctx):
 				await ctx.send(embed=discord.Embed(description=f"**У тебя нет роли <@&{role.id}>**"))
 
 @client.command(aliases=["виппсх", "виппетсим","vipps","виппет"])
-@commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def vippsx(ctx):
 	guild = ctx.message.guild
 	cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
@@ -366,7 +363,6 @@ async def vippsx(ctx):
 				await ctx.send(embed=discord.Embed(description=f"**У тебя нет роли <@&{role.id}>**"))
 
 @client.command()
-@commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def check(ctx):
 	guild = ctx.message.guild
 	cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
@@ -384,7 +380,6 @@ async def check(ctx):
 				await ctx.send(embed=discord.Embed(description=f"**У тебя нет роли <@&{role.id}>**"))
 
 @client.command(aliases=["туториал"])
-@commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def tutorial(ctx):
 	guild = ctx.message.guild
 	cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
