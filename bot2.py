@@ -247,8 +247,6 @@ async def delete(ctx, member: discord.Member):
 		await ctx.send(embed=discord.Embed(description="Роль посредников не настроена.\n Напишите `?setrole [@role | ID]`"))
 	else:
 		cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
-		if cursor.fetchone()==None:
-			await ctx.send(embed=discord.Embed(description=f"**У тебя нет сделок сейчас**"))
 		for row in cursor.fetchone():
 			guild = ctx.guild
 			role = guild.get_role(row)
@@ -268,6 +266,10 @@ async def delete(ctx, member: discord.Member):
 					except:
 						cursor.execute("UPDATE counter SET stat=%s, channel=%s where author=%s and guild=%s", (False, 0, ctx.author.id, ctx.guild.id))
 						connection.commit()
+					cursor.execute("SELECT channel FROM counter where author=%s and guild=%s", (ctx.author.id, ctx.guild.id))
+					for row in cursor.fetchone():
+						if row == 0:
+							await ctx.send(embed=discord.Embed(description=f"**У тебя нет сделок сейчас**"))
 					channel1 = client.get_channel(channel1id)
 					user= await client.fetch_user(member.id)
 					await channel1.set_permissions(user, read_messages=False, send_messages=False, view_channel=False)
