@@ -77,7 +77,7 @@ connection.commit()
 
 @client.command()
 @commands.has_permissions(administrator = True)
-async def set_channel(ctx: SlashContext, channel1):
+async def set_channel(ctx, channel1):
 	try:
 		channel2 = int((str(channel1).split("#")[1]).split(">")[0])
 	except:
