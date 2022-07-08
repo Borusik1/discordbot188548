@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord_slash import SlashCommand, SlashContext
 import json
 from tabulate import tabulate
 from config import settings
@@ -14,6 +15,7 @@ import calendar, time
 connection = psycopg2.connect(settings["DB_URI"], sslmode="require")
 cursor = connection.cursor()
 client = commands.Bot(command_prefix = settings["PREFIX"], intents = discord.Intents.all())
+slash = SlashCommand(client)
 client.remove_command("help")
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -75,9 +77,9 @@ async def on_ready():
 connection.commit()
 
 
-@client.command()
+@slash.slash(name="set channel")
 @commands.has_permissions(administrator = True)
-async def set_wave_channel(ctx, channel1):
+async def set_channel(ctx: SlashContext, channel1):
 	try:
 		channel2 = int((str(channel1).split("#")[1]).split(">")[0])
 	except:
@@ -314,29 +316,94 @@ async def close(ctx):
 @client.command(aliases=["вип"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def vip(ctx):
-	await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в адопте: [Нажми сюда что-бы зайти](https://www.roblox.com/games/920587237?privateServerLinkCode=41122651371977856802806669923465)**"))
+	guild = ctx.message.guild
+	cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
+	if cursor.fetchone()==None:
+		await ctx.send(embed=discord.Embed(description="Роль посредников не настроена.\n Напишите `?setrole [@role | ID]`"))
+	else:
+		cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
+		for row in cursor.fetchone():
+			guild = ctx.guild
+			role = guild.get_role(row)
+			user=ctx.author
+			if role in user.roles:
+				await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в адопте: [Нажми сюда что-бы зайти](https://www.roblox.com/games/920587237?privateServerLinkCode=41122651371977856802806669923465)**"))
+			else:
+				await ctx.send(embed=discord.Embed(description=f"**У тебя нет роли <@&{role.id}>**"))
 
 @client.command(aliases=["vipmm", "випмм2", "випмм"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def vipmm2(ctx):
-	await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в мардер мистери: [Нажми сюда что-бы зайти](https://www.roblox.com/games/142823291?privateServerLinkCode=89852226291968909722581151698927)**"))
+	guild = ctx.message.guild
+	cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
+	if cursor.fetchone()==None:
+		await ctx.send(embed=discord.Embed(description="Роль посредников не настроена.\n Напишите `?setrole [@role | ID]`"))
+	else:
+		cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
+		for row in cursor.fetchone():
+			guild = ctx.guild
+			role = guild.get_role(row)
+			user=ctx.author
+			if role in user.roles:
+				await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в мардер мистери: [Нажми сюда что-бы зайти](https://www.roblox.com/games/142823291?privateServerLinkCode=89852226291968909722581151698927)**"))
+			else:
+				await ctx.send(embed=discord.Embed(description=f"**У тебя нет роли <@&{role.id}>**"))
 
 @client.command(aliases=["виппсх", "виппетсим","vipps","виппет"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def vippsx(ctx):
-	await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в пет симулятор X: [Нажми сюда что-бы зайти](https://www.roblox.com/games/6284583030/x3-Pet-Simulator-X?privateServerLinkCode=55975160176260713274764851250283)**"))
+	guild = ctx.message.guild
+	cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
+	if cursor.fetchone()==None:
+		await ctx.send(embed=discord.Embed(description="Роль посредников не настроена.\n Напишите `?setrole [@role | ID]`"))
+	else:
+		cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
+		for row in cursor.fetchone():
+			guild = ctx.guild
+			role = guild.get_role(row)
+			user=ctx.author
+			if role in user.roles:
+				await ctx.reply(embed=discord.Embed(description=f"**Приватный сервер в пет симулятор X: [Нажми сюда что-бы зайти](https://www.roblox.com/games/6284583030/x3-Pet-Simulator-X?privateServerLinkCode=55975160176260713274764851250283)**"))
+			else:
+				await ctx.send(embed=discord.Embed(description=f"**У тебя нет роли <@&{role.id}>**"))
 
 @client.command()
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def check(ctx):
-	await ctx.reply(embed=discord.Embed(description=f"**Проверить свой пендинг: [Нажми сюда что-бы проверить](https://www.roblox.com/transactions)**"))
+	guild = ctx.message.guild
+	cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
+	if cursor.fetchone()==None:
+		await ctx.send(embed=discord.Embed(description="Роль посредников не настроена.\n Напишите `?setrole [@role | ID]`"))
+	else:
+		cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
+		for row in cursor.fetchone():
+			guild = ctx.guild
+			role = guild.get_role(row)
+			user=ctx.author
+			if role in user.roles:
+				await ctx.reply(embed=discord.Embed(description=f"**Проверить свой пендинг: [Нажми сюда что-бы проверить](https://www.roblox.com/transactions)**"))
+			else:
+				await ctx.send(embed=discord.Embed(description=f"**У тебя нет роли <@&{role.id}>**"))
 
 @client.command(aliases=["туториал"])
 @commands.has_any_role('👨‍👧‍👦 | Посредник')
 async def tutorial(ctx):
-	embed = discord.Embed(description=f"**Туториал как настроить вип:**")
-	embed.set_image(url = "https://rblx.ru/images/roblox_buy.gif")
-	await ctx.reply(embed=embed)
+	guild = ctx.message.guild
+	cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
+	if cursor.fetchone()==None:
+		await ctx.send(embed=discord.Embed(description="Роль посредников не настроена.\n Напишите `?setrole [@role | ID]`"))
+	else:
+		cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, ctx.guild.id))
+		for row in cursor.fetchone():
+			guild = ctx.guild
+			role = guild.get_role(row)
+			user=ctx.author
+			if role in user.roles:
+				embed = discord.Embed(description=f"**Туториал как настроить вип:**")
+				embed.set_image(url = "https://rblx.ru/images/roblox_buy.gif")
+				await ctx.reply(embed=embed)
+			else:
+				await ctx.send(embed=discord.Embed(description=f"**У тебя нет роли <@&{role.id}>**"))
 
 @client.command(aliases = ['$', 'cash', 'баланс', 'деньги', 'бал'])
 async def balance(ctx, member: discord.Member = None):
