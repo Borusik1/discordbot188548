@@ -401,30 +401,30 @@ async def tutorial(ctx):
 @client.command(aliases = ['$', 'cash', 'баланс', 'деньги', 'бал'])
 async def balance(ctx, member: discord.Member = None):
 	if member is None:
-		uid=ctx.author.id
-		for row in cursor.execute(f"SELECT cash FROM users WHERE id = {uid} and guild={ctx.guild.id}"):
-			cash = row[0]
+		cursor.execute("SELECT cash FROM users WHERE id = %s and guild=%s", (ctx.author.id, ctx.guild.id))
+		for row in cursor.fetchone():
+			cash = row
 			await ctx.reply(f'Ваш баланс составляет **{cash}**<:coinGartex:957170467716857866>')
 	else:
-		uid=member.id
-		for row in cursor.execute(f"SELECT cash FROM users WHERE id = {uid} and guild={ctx.guild.id}"):
-			cash = row[0]
+		cursor.execute("SELECT cash FROM users WHERE id = %s and guild=%s", (member.id, ctx.guild.id))
+		for row in cursor.fetchone():
+			cash = row
 			await ctx.reply(f'Баланс данного пользователя составляет **{cash}**<:coinGartex:957170467716857866>')
 
 @commands.cooldown(1, 8*60*60, commands.BucketType.user)
 @client.command(aliases = ['daily'])
 async def timely(ctx):
-	uid=ctx.author.id
-	for row in cursor.execute(f'SELECT cash FROM users WHERE id = {uid} and guild={ctx.guild.id}'):
-		cash = row[0]
+	cursor.execute('SELECT cash FROM users WHERE id = %s and guild=%s', (ctx.author.id, ctx.guild.id))
+	for row in cursor.fetchone():
+		cash = row
 		cash +=10
-		cursor.execute(f'UPDATE users SET cash={cash} where id={uid} and guild={ctx.guild.id}')
+		cursor.execute('UPDATE users SET cash=%s where id=%s and guild=%s', (cash, ctx.author.id, ctx.guild.id))
 		await ctx.send('Ты получил 10<:coinGartex:957170467716857866> поздравляю!')
 		connection.commit()
 
 @client.command()
 async def help(ctx):
-	await ctx.send(f"**Для работы всех этих команд нужно иметь роль с названием '👨‍👧‍👦 | Посредник' с эмодзи:**\n?claim - создать сделку\n?add [@Участник | ID] - добавить участника в сделку\n?del [@Участник | ID] - удалить участника со сделки\n?close - закрыть сделку\n?vip - випка в адопте\n?vipmm2 - випка в мм2\n?vippsx - випка в псх\n?check - проверить пендинг\n?tutorial - показать как настроить випку")
+	await ctx.send(f"\n?claim - создать сделку\n?add [@Участник | ID] - добавить участника в сделку\n?del [@Участник | ID] - удалить участника со сделки\n?close - закрыть сделку\n?vip - випка в адопте\n?vipmm2 - випка в мм2\n?vippsx - випка в псх\n?check - проверить пендинг\n?tutorial - показать как настроить випку")
 
 @client.event
 async def on_command_error(ctx, error):
