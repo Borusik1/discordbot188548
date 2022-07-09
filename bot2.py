@@ -15,7 +15,7 @@ connection = psycopg2.connect(settings["DB_URI"], sslmode="require")
 cursor = connection.cursor()
 client = commands.Bot(command_prefix = settings["PREFIX"], intents = discord.Intents.all())
 client.remove_command("help")
-slash = SlashCommand(client)
+slash = SlashCommand(client, sync_commands=True)
 
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -47,8 +47,6 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS counter (
 
 @client.event
 async def on_ready():
-	status=['?help','?help','?help','?help','?help','?help', '¿help']
-	msg = cycle(status)
 	for guild in client.guilds:
 			for member in guild.members:
 				cursor.execute("SELECT id FROM users where id=%s and guild=%s", (member.id, guild.id))
@@ -59,8 +57,7 @@ async def on_ready():
 					pass
 	print("Bot Has been runned")
 	while not client.is_closed():
-		next_status= next(msg)
-		await client.change_presence(activity = discord.Game(name=next_status))
+		await client.change_presence(activity = discord.Game(name="только в slash-команды"))
 		try:
 			guild = await client.fetch_guild(947055981601357914)
 			member = await client.fetch_user(608599277027196945)
@@ -79,7 +76,7 @@ connection.commit()
 
 @slash.slash(description="Установить канал для приветствий")
 @commands.has_permissions(administrator = True)
-async def set_channel(ctx, channel):
+async def set_channel(ctx: SlashContext, channel):
 	try:
 		channel2 = int((str(channel).split("#")[1]).split(">")[0])
 	except:
