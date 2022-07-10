@@ -1,4 +1,4 @@
 git+https://github.com/Rapptz/discord.py
 tabulate
 psycopg2
-discord-py-slash-command==3.0.3
+discord_py_slash_command
