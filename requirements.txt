@@ -1,4 +1,4 @@
 git+https://github.com/Rapptz/discord.py
 tabulate
 psycopg2
-discord-py-slash-command==4.2.1
+git+https://github.com/interactions-py/library
