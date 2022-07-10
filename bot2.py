@@ -15,7 +15,7 @@ connection = psycopg2.connect(settings["DB_URI"], sslmode="require")
 cursor = connection.cursor()
 client = commands.Bot(command_prefix = settings["PREFIX"], intents = discord.Intents.all())
 client.remove_command("help")
-slash = SlashCommand(client)
+slash = SlashCommand(client, sync_commands=True)
 
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS users (
