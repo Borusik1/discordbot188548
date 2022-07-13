@@ -2,3 +2,4 @@ git+https://github.com/Rapptz/discord.py
 tabulate
 psycopg2
 discord-py-interactions
+interactions-get
