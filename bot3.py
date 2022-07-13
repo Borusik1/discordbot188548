@@ -13,8 +13,11 @@ import psycopg2
 import calendar, time
 import discord
 from logging import basicConfig, DEBUG
+import os
 
 #basicConfig(level=DEBUG)
+i = os.environ['DATABASE_URL']
+print(i)
 bot = interactions.Client("OTE3MDMwMjM4NTk1MjA3MTY4.Yayw9g.1rYs1KWblY90oTXxwGXPlsTXdOQ", intents = interactions.Intents.ALL)
 connection = psycopg2.connect(settings["DB_URI"], sslmode="require")
 cursor = connection.cursor()
