@@ -400,7 +400,7 @@ async def ticket(ctx, sub_command: str, member = None):
 				cursor.execute("UPDATE counter SET stat=%s, channel=%s where author=%s and guild=%s", (False, 0, author, guild))
 				connection.commit()
 				await ctx.send("Сделка закрыта")
-				await channel1.send(embeds=interactions.Embed(description=f"**Больше создатель сделки не имеет к ней доступа"))		
+				await channel1.send(embeds=interactions.Embed(description=f"**Больше создатель сделки не имеет к ней доступа**"))		
 @bot.command(
 	name="destroy",
 	description="Удалить сделку",
