@@ -13,13 +13,14 @@ import psycopg2
 import calendar, time
 import discord
 from logging import basicConfig, DEBUG
-import os
+
+database = os.environ['DATABASE_URL']
+token = os.environ["BOT_TOKEN"]
 
 #basicConfig(level=DEBUG)
-i = os.environ['DATABASE_URL']
-print(i)
-bot = interactions.Client("OTE3MDMwMjM4NTk1MjA3MTY4.Yayw9g.1rYs1KWblY90oTXxwGXPlsTXdOQ", intents = interactions.Intents.ALL)
-connection = psycopg2.connect(settings["DB_URI"], sslmode="require")
+
+bot = interactions.Client(token, intents = interactions.Intents.ALL)
+connection = psycopg2.connect(database, sslmode="require")
 cursor = connection.cursor()
 
 
@@ -69,12 +70,6 @@ async def on_ready():
 	i = 1 
 	while i==1:
 		await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
-		guild = await get(bot, interactions.Guild, guild_id=947055981601357914)
-		member = await get(bot, interactions.Member, guild_id = int(guild.id), member_id=608599277027196945)
-#		role = await get(bot, interactions.Role, guild_id = int(guild.id), role_id=)
-#		await guild.add_member_role(role.id, member.id)	
-		role1 = await get(bot, interactions.Role, guild_id = int(guild.id), role_id=978338145315749969)
-		await guild.remove_member_role(role1.id, member.id)
 		await asyncio.sleep(10)
 
 @bot.event
@@ -403,7 +398,7 @@ async def ticket(ctx, sub_command: str, member = None):
 				cursor.execute("UPDATE counter SET stat=%s, channel=%s where author=%s and guild=%s", (False, 0, author, guild))
 				connection.commit()
 				await ctx.send("Сделка закрыта")
-				await channel1.send(embeds=interactions.Embed(description=f"**Больше создатель сделки не имеет к ней доступа**"))		
+				await channel1.send(embeds=interactions.Embed(description=f"**Больше создатель сделки не имеет к ней доступа"))		
 @bot.command(
 	name="destroy",
 	description="Удалить сделку",
