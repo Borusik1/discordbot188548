@@ -16,7 +16,8 @@ from logging import basicConfig, DEBUG
 import os
 
 
-
+os.environ['DATABASE_URL'] = 'postgres://etdqcmbnqseqpe:21406b78e6a94b332e1d790b5246565f1144098fd1a95e4fd4d1d8fd4e0ccc07@ec2-54-194-211-183.eu-west-1.compute.amazonaws.com:5432/d3bkqd4pplu1ba'
+os.environ['BOT_TOKEN'] = 'OTE3MDMwMjM4NTk1MjA3MTY4.Yayw9g.1rYs1KWblY90oTXxwGXPlsTXdOQ'
 #basicConfig(level=DEBUG)
 database = os.environ['DATABASE_URL']
 token = os.environ["BOT_TOKEN"]
@@ -159,6 +160,7 @@ async def cmd(ctx, sub_command: str, channel = None, category = None):
 		else:
 			embed=interactions.Embed(color =0xf50a19, description=f"Это не категория")
 			await ctx.send(embeds=embed)
+
 @bot.command(
 	name="ticket",
 	description="None",
@@ -172,11 +174,12 @@ async def cmd(ctx, sub_command: str, channel = None, category = None):
 			name="add",
 			description="Добавить участника в сделку",
 			type=interactions.OptionType.SUB_COMMAND,
-			options= [interactions.Option(
-				name="member",
-				description="Участник которого желаете добавить",
-				type=interactions.OptionType.USER,
-				required=True,
+			options= [
+				interactions.Option(
+					name="user",
+					description="Участник которого желаете добавить",
+					type=interactions.OptionType.USER,
+					required=True,
 			),
 		],
 		),
@@ -184,11 +187,12 @@ async def cmd(ctx, sub_command: str, channel = None, category = None):
 			name="kick",
 			description="Удалить участника из сделки",
 			type=interactions.OptionType.SUB_COMMAND,
-			options=[ interactions.Option(
-				name="member",
-				description="Участник которого желаете удалить",
-				type=interactions.OptionType.USER,
-				required=True,
+			options=[ 
+				interactions.Option(
+					name="user",
+					description="Участник которого желаете удалить",
+					type=interactions.OptionType.USER,
+					required=True,
 			),
 		]
 		),
@@ -199,7 +203,8 @@ async def cmd(ctx, sub_command: str, channel = None, category = None):
 		),
 	],
 )
-async def ticket(ctx, sub_command: str, member = None):
+async def ticket(ctx, sub_command: str, user = None):
+	member = user
 	await ctx.defer()
 	if sub_command=="claim":
 		guild = int(ctx.guild_id)
@@ -408,10 +413,12 @@ async def ticket(ctx, sub_command: str, member = None):
 		name="channel",
 		description="Сделка которую удалить",
 		type=interactions.OptionType.CHANNEL,
-		requered=False,
+		required=False,
 	),]
 )
 async def destroy(ctx, channel = None):
+	if channel == None:
+		channel = await ctx.get_channel()
 	await ctx.defer()
 	guild = int(ctx.guild_id)
 	try:
@@ -424,59 +431,31 @@ async def destroy(ctx, channel = None):
 	except:
 		cursor.execute("UPDATE status SET status=%s, arg=%s WHERE id=%s and guild=%s", (False, 0, 3, guild))
 		connection.commit()
-	if channel != None:
-		if channel.type != interactions.ChannelType.GUILD_CATEGORY:
-			cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
-			if cursor.fetchone()==None:
-				await ctx.send(embeds=interactions.Embed(color=0xf50a19, description="**Категория для сделок не настроена**"))
-			else:
-				cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
-				for row in cursor.fetchone():
-					cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
-					if row == 0:
-						await ctx.send(embeds=interactions.Embed(color=0xf50a19, description="**Категория для сделок не настроена**"))
-					else:
-						cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
-						for row in cursor.fetchone():
-							category = row
-							if channel.parent_id ==None:
-								parent =1
-							else:
-								parent = int(channel.parent_id)
-							if  parent == category:
-								await channel.delete()
-								await ctx.send(embeds=interactions.Embed(description="Сделка успешно удалена"))
-							else:
-								await ctx.send(embeds=interactions.Embed(color=0xf50a19, description="**Канал не в той категории**"))
+	if channel.type != interactions.ChannelType.GUILD_CATEGORY:
+		cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
+		if cursor.fetchone()==None:
+			await ctx.send(embeds=interactions.Embed(color=0xf50a19, description="**Категория для сделок не настроена**"))
 		else:
-			await ctx.send(embeds=interactions.Embed(color=0xf50a19,description="**Зачем-же категорию удалять?**"))
+			cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
+			for row in cursor.fetchone():
+				cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
+				if row == 0:
+					await ctx.send(embeds=interactions.Embed(color=0xf50a19, description="**Категория для сделок не настроена**"))
+				else:
+					cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
+					for row in cursor.fetchone():
+						category = row
+						if channel.parent_id ==None:
+							parent =1
+						else:
+							parent = int(channel.parent_id)
+						if  parent == category:
+							await channel.delete()
+							await ctx.send(embeds=interactions.Embed(description="**Сделка успешно удалена**"))
+						else:
+							await ctx.send(embeds=interactions.Embed(color=0xf50a19, description="**Канал не в той категории**"))
 	else:
-		channel1 = await ctx.get_channel()
-		if channel1.type != interactions.ChannelType.GUILD_CATEGORY:
-			cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
-			if cursor.fetchone()==None:
-				await ctx.send(embeds=interactions.Embed(color=0xf50a19, description="**Категория для сделок не настроена**"))
-			else:
-				cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
-				for row in cursor.fetchone():
-					cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
-					if row == 0:
-						await ctx.send(embeds=interactions.Embed(color=0xf50a19, description="**Категория для сделок не настроена**"))
-					else:
-						cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (3, guild))
-						for row in cursor.fetchone():
-							category = row
-							if channel1.parent_id ==None:
-								parent =1
-							else:
-								parent = int(channel1.parent_id)
-							if  parent == category:
-								await channel1.delete()
-								await ctx.send(embeds=interactions.Embed(description="Сделка успешно удалена"))
-							else:
-								await ctx.send(embeds=interactions.Embed(color=0xf50a19, description="**Канал не в той категории**"))
-		else:
-			await ctx.send(embeds=interactions.Embed(color=0xf50a19,description="**Зачем-же категорию удалять?**"))
+		await ctx.send(embeds=interactions.Embed(color=0xf50a19,description="**Зачем-же категорию удалять?**"))
 	
 
 @bot.command(
@@ -509,4 +488,18 @@ async def vip(ctx, sub_command: str):
 	elif sub_command =="psx":
 		await ctx.send(embeds=interactions.Embed(description=f"**Приватный сервер в пет симулятор X: [Нажми сюда что-бы зайти](https://www.roblox.com/games/6284583030/x3-Pet-Simulator-X?privateServerLinkCode=55975160176260713274764851250283)**"))
 
+@bot.command(
+	name="balance",
+	description="Посмотреть баланс",
+	options=[
+		interactions.Option(
+			name="user",
+			description="Участник которого желаете посмотреть баланс",
+			type=interactions.OptionType.USER,
+			required=False,
+		),
+	],
+)
+async def balance(ctx, user = None):
+	pass
 bot.start()
