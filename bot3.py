@@ -2,6 +2,7 @@ from unicodedata import category
 from aiohttp import request
 import interactions
 from interactions.ext.get import get
+from cooldowns import cooldown
 import json
 from tabulate import tabulate
 from config import settings
@@ -11,10 +12,8 @@ import datetime
 import re
 import psycopg2
 import calendar, time
-import discord
-from logging import basicConfig, DEBUG
 import os
-
+from logging import basicConfig, DEBUG
 
 #os.environ['DATABASE_URL'] = 'postgres://etdqcmbnqseqpe:21406b78e6a94b332e1d790b5246565f1144098fd1a95e4fd4d1d8fd4e0ccc07@ec2-54-194-211-183.eu-west-1.compute.amazonaws.com:5432/d3bkqd4pplu1ba'
 #os.environ['BOT_TOKEN'] = 'OTE3MDMwMjM4NTk1MjA3MTY4.Yayw9g.1rYs1KWblY90oTXxwGXPlsTXdOQ'
@@ -53,7 +52,7 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS counter (
 #	print(row)
 
 @bot.event
-async def on_ready():
+async def on_start():
 	await asyncio.sleep(2)
 	for guild in bot.guilds:
 		await asyncio.sleep(2)
@@ -69,10 +68,8 @@ async def on_ready():
 			else:
 				pass
 	print("Bot Has been runned")
-	i = 1 
-	while i==1:
-		await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
-		await asyncio.sleep(10)
+	print(f"Ping: {bot.latency}")
+	await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
 
 @bot.event
 async def on_guild_member_add(member):
@@ -127,6 +124,20 @@ async def on_guild_member_add(member):
 
 			],
 		),
+		interactions.Option(
+			name="requests",
+			description="Установить канал в которой приходят запросы",
+			type=interactions.OptionType.SUB_COMMAND,
+			options=[
+				interactions.Option(
+					name="channel",
+					description="Канал на который установить",
+					type=interactions.OptionType.CHANNEL,
+					required=True,
+				),
+
+			],
+		),
 	],
 )
 async def cmd(ctx, sub_command: str, channel = None, category = None):
@@ -160,6 +171,18 @@ async def cmd(ctx, sub_command: str, channel = None, category = None):
 		else:
 			embed=interactions.Embed(color =0xf50a19, description=f"Это не категория")
 			await ctx.send(embeds=embed)
+	elif sub_command=="requests":
+		channel1 = int(channel.id)
+		if channel.type == interactions.ChannelType.GUILD_TEXT:
+			cursor.execute("SELECT id FROM status where id=%s and guild=%s", (2, guild))
+			if cursor.fetchone()==None:
+				cursor.execute("INSERT INTO status VALUES (%s, %s, %s, %s)", (2, True, channel1, guild))
+			else:
+				cursor.execute('UPDATE status SET arg=%s, status=%s where id=%s and guild=%s', (channel1, True,  2, guild))
+			connection.commit()
+			await ctx.send(embeds=interactions.Embed(color=0x14e34b, description=f"Канал для получения запросов успешно настроен на {channel.mention}"))
+		else:
+			await ctx.send("Канал не текствого типа")
 
 @bot.command(
 	name="ticket",
@@ -226,8 +249,6 @@ async def ticket(ctx, sub_command: str, user = None):
 				guild = int(ctx.guild_id)
 				cursor.execute("UPDATE counter SET stat=%s, channel=%s where author=%s and guild=%s", (False, 0, author, guild))
 				connection.commit()
-			finally:
-				pass
 		cursor.execute("SELECT stat FROM counter where author=%s and guild=%s", (author, guild))
 		for row in cursor.fetchone():
 			count = row
@@ -251,7 +272,7 @@ async def ticket(ctx, sub_command: str, user = None):
 						category1=None
 					finally:
 						author = int(ctx.author.id)
-						guild1 =  await ctx.get_guild()
+						guild1 =  await interactions.get(bot, interactions.Guild, object_id=int(ctx.guild_id))
 						channel = await guild1.create_channel(name=f'сделка-{ctx.author.name}', type= interactions.ChannelType.GUILD_TEXT, parent_id=category1)
 						user= ctx.author
 						channel1 = int(channel.id)
@@ -292,7 +313,7 @@ async def ticket(ctx, sub_command: str, user = None):
 				cursor.execute("SELECT channel FROM counter where author=%s and guild=%s", (author, guild))
 				for row in cursor.fetchone():
 					channel1id = row
-					guild1 = await ctx.get_guild()
+					guild1 = await interactions.get(bot, interactions.Guild, object_id=int(ctx.guild_id))
 					channel1 = await get(bot, interactions.Channel, channel_id=channel1id)
 					call = channel1.id
 			except:
@@ -316,7 +337,7 @@ async def ticket(ctx, sub_command: str, user = None):
        		)
 			await channel1.modify(permission_overwrites=overwrites)
 			try:
-				guild = await ctx.get_guild()
+				guild = await interactions.get(bot, interactions.Guild, object_id=int(ctx.guild_id))
 				role = await get(bot, interactions.Role, guild_id = int(ctx.guild_id), role_id=936505743987867659)
 				await guild.add_member_role(role.id, member.id)
 			except:
@@ -325,7 +346,6 @@ async def ticket(ctx, sub_command: str, user = None):
 			await ctx.send("Участник успешно добавлен.",embeds=interactions.Embed(description=f"**Участник <@{member.id}> успешно добавлен в <#{channel1.id}>.**"))
 			
 	elif sub_command =="kick":
-		await ctx.get_channel()
 		author = int(ctx.author.id)
 		guild = int(ctx.guild_id)
 		cursor.execute("SELECT author FROM counter where author=%s and guild=%s", (author, guild))
@@ -339,7 +359,7 @@ async def ticket(ctx, sub_command: str, user = None):
 				cursor.execute("SELECT channel FROM counter where author=%s and guild=%s", (author, guild))
 				for row in cursor.fetchone():
 					channel1id = row
-					guild1 = await ctx.get_guild()
+					guild1 = await interactions.get(bot, interactions.Guild, object_id=int(ctx.guild_id))
 					channel1 = await get(bot, interactions.Channel, channel_id=channel1id)
 					call = channel1.id
 			except:
@@ -363,7 +383,7 @@ async def ticket(ctx, sub_command: str, user = None):
        		)
 			await channel1.modify(permission_overwrites=overwrites)
 			try:
-				guild = await ctx.get_guild()
+				guild = await interactions.get(bot, interactions.Guild, object_id=int(ctx.guild_id))
 				role = await get(bot, interactions.Role, guild_id = int(ctx.guild_id), role_id=936505743987867659)
 				await guild.add_member_role(role.id, member.id)
 			except:
@@ -404,7 +424,7 @@ async def ticket(ctx, sub_command: str, user = None):
 				cursor.execute("UPDATE counter SET stat=%s, channel=%s where author=%s and guild=%s", (False, 0, author, guild))
 				connection.commit()
 				await ctx.send("Сделка закрыта")
-				await channel1.send(embeds=interactions.Embed(description=f"**Больше создатель сделки не имеет к ней доступа"))		
+				await channel1.send(embeds=interactions.Embed(description=f"**Больше создатель сделки не имеет к ней доступа**"))		
 @bot.command(
 	name="destroy",
 	description="Удалить сделку",
@@ -502,4 +522,121 @@ async def vip(ctx, sub_command: str):
 )
 async def balance(ctx, user = None):
 	pass
+
+button = interactions.Button(
+	style=interactions.ButtonStyle.PRIMARY,
+	label="Нужна сделка",
+	custom_id="request"
+)
+
+@bot.command(
+    name="setup",
+    description="Установить запрос на сделки",
+	default_member_permissions=interactions.Permissions.ADMINISTRATOR,
+)
+async def setup(ctx):
+	await ctx.defer()
+	cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (2, int(ctx.guild_id)))
+	if cursor.fetchone() is None:
+		await ctx.send("Не настроен канал для получения запросов", ephemeral=True)
+	else:
+		cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (2, int(ctx.guild_id)))
+		for row in cursor.fetchone():
+			if row == False:
+				await ctx.send("Информация о канале для запросов устарела", ephemeral=True)
+			else:
+				await ctx.send(embeds=interactions.Embed(description="**Создать запрос на сделку**"), components=button)
+
+async def cooldown_error_form(ctx, amount):
+	t = amount.total_seconds()
+	a = int(str(time.time()).split('.')[0])
+	b = int(str(t).split('.')[0])
+	timestamps = a+b
+	await ctx.send(f"Ты уже отправил запрос, <t:{timestamps}:R> сможешь опять.", ephemeral=True)
+
+@bot.component("request")
+async def button_response(ctx):
+	modal = interactions.Modal(
+		title="Форма запроса",
+		custom_id="request_form",
+        components=[
+	        interactions.TextInput(
+				style=interactions.TextStyleType.SHORT,
+				label="ID участника с которым сделка",
+				custom_id="text_input_response",
+				min_length=18,
+				max_length=18,
+				required=True,
+			),
+			interactions.TextInput(
+				style=interactions.TextStyleType.SHORT,
+				label="Что получит гарант?",
+				custom_id="text_input_response2",
+				max_length=100,
+				required=True,
+			),
+			interactions.TextInput(
+				style=interactions.TextStyleType.PARAGRAPH,
+				label="Подробности сделки",
+				custom_id="text_input_response3",
+				max_length=200,
+				required=False,
+			),
+		],
+	)
+	await ctx.popup(modal)
+
+@bot.modal("request_form")
+@cooldown(seconds=600, error=cooldown_error_form, type="user")
+async def modal_response(ctx, response = str, response2 = str, response3 = None):
+	await ctx.defer(ephemeral=True)
+	try:
+		m_id=int(response)
+		member = await get(bot, interactions.User, user_id=m_id)
+		print(member)
+	except:
+		await ctx.send(f"Неверно указан ID", ephemeral=True)
+	else:
+		if int(response) == int(ctx.author.id):
+			await ctx.send(f"Нельзя указать себя", ephemeral=True)
+		else:
+			author = int(ctx.author.id)
+			guild = await interactions.get(bot, interactions.Guild, object_id=int(ctx.guild_id))
+			guild1 = int(guild.id)
+			cursor.execute("SELECT arg FROM status where id=%s and guild=%s", (2, guild1))
+			for row in cursor.fetchone():
+				channel = row
+				try:
+					channel1 = await interactions.get(bot, interactions.Channel, object_id=channel)
+					call = channel1.id
+				except:
+					author = int(ctx.author.id)
+					guild = int(ctx.guild_id)
+					cursor.execute("UPDATE status SET status=%s, arg=%s where id=%s and guild=%s", (False, 0, 2, guild))
+					connection.commit()
+				finally:
+					embed = interactions.Embed(
+						title=f"Создал запрос на сделку",
+						description=f"**Второй участник сделки {member.mention} [{member.id}]**\n\n**Гарант получит:** {response2}",
+						color=0x0ddb14,
+						timestamp=datetime.datetime.now()
+					)
+					embed.set_author(name=f"{ctx.author.name}#{ctx.author.user.discriminator} [{ctx.author.id}]", icon_url=ctx.author.user.avatar_url)
+					if response3:
+						embed.add_field(
+							name="Подробности сделки:",
+							value=f"{response3}",
+							inline=True
+						)
+					cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (2, int(ctx.guild_id)))
+					for row in cursor.fetchone():
+						if row == False:
+							await ctx.send(f"Информация о канале для получения форм устарела. Пожалуйста, сообщите администраторам")
+						else:
+							await channel1.send(embeds=embed)
+							await ctx.send(f"Форма успешно отправлена")
+
+
+
+
 bot.start()
