@@ -1,5 +1,5 @@
 tabulate
 psycopg2
-git+https://github.com/interactions-py
+git+https://github.com/interactions-py/library.git@unstable
 interactions-get
 asyncpraw
