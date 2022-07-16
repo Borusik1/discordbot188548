@@ -14,15 +14,28 @@ import psycopg2
 import calendar, time
 import os
 from logging import basicConfig, DEBUG
+import asyncpraw
 
-#os.environ['DATABASE_URL'] = 'postgres://etdqcmbnqseqpe:21406b78e6a94b332e1d790b5246565f1144098fd1a95e4fd4d1d8fd4e0ccc07@ec2-54-194-211-183.eu-west-1.compute.amazonaws.com:5432/d3bkqd4pplu1ba'
-#os.environ['BOT_TOKEN'] = 'OTE3MDMwMjM4NTk1MjA3MTY4.Yayw9g.1rYs1KWblY90oTXxwGXPlsTXdOQ'
+os.environ['DATABASE_URL'] = 'postgres://etdqcmbnqseqpe:21406b78e6a94b332e1d790b5246565f1144098fd1a95e4fd4d1d8fd4e0ccc07@ec2-54-194-211-183.eu-west-1.compute.amazonaws.com:5432/d3bkqd4pplu1ba'
+os.environ['BOT_TOKEN'] = 'OTE3MDMwMjM4NTk1MjA3MTY4.Yayw9g.1rYs1KWblY90oTXxwGXPlsTXdOQ'
+os.environ['CLIENT_ID'] = 'c9k3wEk8beWmOkiKJ3x0FA'
+os.environ['CLIENT_SECRET'] = '2XFJF6Ue6jIdO17hlVvcAdsj4ycKjA'
 #basicConfig(level=DEBUG)
+
 database = os.environ['DATABASE_URL']
 token = os.environ["BOT_TOKEN"]
+client_id = os.environ["CLIENT_ID"]
+client_secret = os.environ["CLIENT_SECRET"]
+reddit = asyncpraw.Reddit(
+	client_id=client_id,
+	client_secret=client_secret,
+	user_agent='random_reddit_bot/0.0.1'
+)
 bot = interactions.Client(token, intents = interactions.Intents.ALL)
 connection = psycopg2.connect(database, sslmode="require")
 cursor = connection.cursor()
+imgs = []
+subreddits = ['hentai', 'porn', "nsfw"]
 
 
 
@@ -53,6 +66,7 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS counter (
 
 @bot.event
 async def on_start():
+	await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
 	await asyncio.sleep(2)
 	for guild in bot.guilds:
 		await asyncio.sleep(2)
@@ -69,7 +83,27 @@ async def on_start():
 				pass
 	print("Bot Has been runned")
 	print(f"Ping: {bot.latency}")
-	await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
+	subred = cycle(subreddits)
+	if True:
+		await asyncio.sleep(10)
+		for guild in bot.guilds:
+			guild1 = int(guild.id)
+			cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
+			for row in cursor.fetchone():
+				next_subred = next(subred)
+				nsfw = await reddit.subreddit(next_subred)
+				nsfw = nsfw.new(limit=1)
+				item = await nsfw.__anext__()
+				if item.title not in imgs:
+					channel = await get(bot, interactions.Channel, channel_id=row)
+					if channel.nsfw == True:
+						embed = interactions.Embed(title=item.title)
+						embed.set_image(url=item.url)
+						imgs.append(item.title)
+						embed.set_author(name="Рассылка с реддита")
+						await channel.send(embeds=embed)
+		
+		
 
 @bot.event
 async def on_guild_member_add(member):
@@ -138,6 +172,20 @@ async def on_guild_member_add(member):
 
 			],
 		),
+		interactions.Option(
+			name="nsfw",
+			description="Установить канал для NSFW(18+) рассылки",
+			type=interactions.OptionType.SUB_COMMAND,
+			options=[
+				interactions.Option(
+					name="channel",
+					description="Канал на который установить",
+					type=interactions.OptionType.CHANNEL,
+					required=True,
+				),
+
+			],
+		),
 	],
 )
 async def cmd(ctx, sub_command: str, channel = None, category = None):
@@ -181,6 +229,18 @@ async def cmd(ctx, sub_command: str, channel = None, category = None):
 				cursor.execute('UPDATE status SET arg=%s, status=%s where id=%s and guild=%s', (channel1, True,  2, guild))
 			connection.commit()
 			await ctx.send(embeds=interactions.Embed(color=0x14e34b, description=f"Канал для получения запросов успешно настроен на {channel.mention}"))
+		else:
+			await ctx.send("Канал не текствого типа")
+	elif sub_command=="nsfw":
+		channel1 = int(channel.id)
+		if channel.type == interactions.ChannelType.GUILD_TEXT:
+			cursor.execute("SELECT id FROM status where id=%s and guild=%s", (4, guild))
+			if cursor.fetchone()==None:
+				cursor.execute("INSERT INTO status VALUES (%s, %s, %s, %s)", (4, True, channel1, guild))
+			else:
+				cursor.execute('UPDATE status SET arg=%s, status=%s where id=%s and guild=%s', (channel1, True,  4, guild))
+			connection.commit()
+			await ctx.send(embeds=interactions.Embed(color=0x14e34b, description=f"Канал для получения NSFW(18+) рассылки успешно настроен на {channel.mention}"))
 		else:
 			await ctx.send("Канал не текствого типа")
 
