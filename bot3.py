@@ -53,6 +53,7 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS counter (
 
 @bot.event
 async def on_start():
+	await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
 	await asyncio.sleep(2)
 	for guild in bot.guilds:
 		await asyncio.sleep(2)
@@ -69,7 +70,6 @@ async def on_start():
 				pass
 	print("Bot Has been runned")
 	print(f"Ping: {bot.latency}")
-	await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
 
 @bot.event
 async def on_guild_member_add(member):
