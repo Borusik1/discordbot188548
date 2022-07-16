@@ -16,10 +16,10 @@ import os
 from logging import basicConfig, DEBUG
 import asyncpraw
 
-os.environ['DATABASE_URL'] = 'postgres://etdqcmbnqseqpe:21406b78e6a94b332e1d790b5246565f1144098fd1a95e4fd4d1d8fd4e0ccc07@ec2-54-194-211-183.eu-west-1.compute.amazonaws.com:5432/d3bkqd4pplu1ba'
-os.environ['BOT_TOKEN'] = 'OTE3MDMwMjM4NTk1MjA3MTY4.Yayw9g.1rYs1KWblY90oTXxwGXPlsTXdOQ'
-os.environ['CLIENT_ID'] = 'c9k3wEk8beWmOkiKJ3x0FA'
-os.environ['CLIENT_SECRET'] = '2XFJF6Ue6jIdO17hlVvcAdsj4ycKjA'
+#os.environ['DATABASE_URL'] = 'postgres://etdqcmbnqseqpe:21406b78e6a94b332e1d790b5246565f1144098fd1a95e4fd4d1d8fd4e0ccc07@ec2-54-194-211-183.eu-west-1.compute.amazonaws.com:5432/d3bkqd4pplu1ba'
+#os.environ['BOT_TOKEN'] = 'OTE3MDMwMjM4NTk1MjA3MTY4.Yayw9g.1rYs1KWblY90oTXxwGXPlsTXdOQ'
+#os.environ['CLIENT_ID'] = 'c9k3wEk8beWmOkiKJ3x0FA'
+#os.environ['CLIENT_SECRET'] = '2XFJF6Ue6jIdO17hlVvcAdsj4ycKjA'
 #basicConfig(level=DEBUG)
 
 database = os.environ['DATABASE_URL']
