@@ -1,5 +1,5 @@
 git+https://github.com/Rapptz/discord.py
 tabulate
 psycopg2
-discord-py-interactions
+git+https://github.com/interactions-py/library.git@unstable
 interactions-get
