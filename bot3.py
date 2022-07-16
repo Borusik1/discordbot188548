@@ -53,7 +53,6 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS counter (
 
 @bot.event
 async def on_start():
-	await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
 	await asyncio.sleep(2)
 	for guild in bot.guilds:
 		await asyncio.sleep(2)
@@ -70,6 +69,7 @@ async def on_start():
 				pass
 	print("Bot Has been runned")
 	print(f"Ping: {bot.latency}")
+	await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
 
 @bot.event
 async def on_guild_member_add(member):
@@ -319,6 +319,11 @@ async def ticket(ctx, sub_command: str, user = None):
 			except:
 				cursor.execute("UPDATE counter SET stat=%s, channel=%s where author=%s and guild=%s", (False, 0, author, guild))
 				connection.commit()
+			else:
+				try:
+					user= await get(bot, interactions.User, user_id=int(member.id))
+				except:
+					await ctx.send("Участника нет на сервере")
 			cursor.execute("SELECT channel FROM counter where author=%s and guild=%s", (author, guild))
 			for row in cursor.fetchone():
 				if row == 0:
@@ -365,6 +370,11 @@ async def ticket(ctx, sub_command: str, user = None):
 			except:
 				cursor.execute("UPDATE counter SET stat=%s, channel=%s where author=%s and guild=%s", (False, 0, author, guild))
 				connection.commit()
+			else:
+				try:
+					user= await get(bot, interactions.User, user_id=int(member.id))
+				except:
+					await ctx.send("Участника нет на сервере")
 			cursor.execute("SELECT channel FROM counter where author=%s and guild=%s", (author, guild))
 			for row in cursor.fetchone():
 				if row == 0:
@@ -570,7 +580,7 @@ async def button_response(ctx):
 			),
 			interactions.TextInput(
 				style=interactions.TextStyleType.SHORT,
-				label="Что получит гарант?",
+				label="Что получит гарант",
 				custom_id="text_input_response2",
 				max_length=100,
 				required=True,
