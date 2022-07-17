@@ -6,7 +6,6 @@ from interactions.ext.get import get
 from interactions.ext.enhanced import cooldown
 import json
 from tabulate import tabulate
-from config import settings
 import asyncio
 from itertools import cycle
 import datetime
