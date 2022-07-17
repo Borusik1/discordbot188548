@@ -103,9 +103,10 @@ async def on_start():
 						pass
 					else:
 						if rand_nsfw.title not in imgs:
+							url = "https://www.reddit.com/"+rand_nsfw.permalink
 							channel = await get(bot, interactions.Channel, channel_id=row)
 							await channel.set_nsfw(nsfw=True)
-							embed = interactions.Embed(title=rand_nsfw.title, description=rand_nsfw.selftext)
+							embed = interactions.Embed(title=f"[{rand_nsfw.title}]({url})")
 							embed.set_image(url=rand_nsfw.url)
 							embed.set_author(name=f"/{next_subred} (hot)")
 							await channel.send(embeds=embed)
@@ -117,13 +118,14 @@ async def on_start():
 						if item.is_self:
 							pass
 						else:
+							url = "https://www.reddit.com/"+item.permalink
 							channel = await get(bot, interactions.Channel, channel_id=row)
 							await channel.set_nsfw(nsfw=True)
-							embed = interactions.Embed(title=item.title)
+							embed = interactions.Embed(title=f"[{rand_nsfw.title}]({url})")
 							embed.set_image(url=item.url)
 							embed.set_author(name=f"/{next_subred} (newest)")
 							await channel.send(embeds=embed)
-		imgs.append(item.title)
+							imgs.append(item.title)
 		
 		
 
@@ -250,6 +252,7 @@ async def cmd(ctx, sub_command: str, channel = None, category = None):
 			else:
 				cursor.execute('UPDATE status SET arg=%s, status=%s where id=%s and guild=%s', (channel1, True,  2, guild))
 			connection.commit()
+			await channel.modify(nsfw=True)
 			await ctx.send(embeds=interactions.Embed(color=0x14e34b, description=f"Канал для получения запросов успешно настроен на {channel.mention}"))
 		else:
 			await ctx.send("Канал не текствого типа")
