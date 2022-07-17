@@ -1,8 +1,9 @@
 from unicodedata import category
+import random
 from aiohttp import request
 import interactions
 from interactions.ext.get import get
-from cooldowns import cooldown
+from interactions.ext.enhanced import cooldown
 import json
 from tabulate import tabulate
 from config import settings
@@ -35,7 +36,8 @@ bot = interactions.Client(token, intents = interactions.Intents.ALL)
 connection = psycopg2.connect(database, sslmode="require")
 cursor = connection.cursor()
 imgs = []
-subreddits = ['hentai', 'porn', "nsfw"]
+subreddits = ['hentai', 'porn', "nsfw", "hentaibondage", "yuri", "YuriHentai"]
+subs= []
 
 
 
@@ -65,7 +67,7 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS counter (
 #	print(row)
 
 @bot.event
-async def on_ready():
+async def on_start():
 	await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
 	await asyncio.sleep(2)
 	for guild in bot.guilds:
@@ -93,29 +95,36 @@ async def on_ready():
 			if cursor.fetchone()!=None:
 				cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
 				for row in cursor.fetchone():
+					nsfw1 = await reddit.subreddit(next_subred)
+					if not subs:
+						async for nsfw in nsfw1.hot(limit=300):
+							subs.append(nsfw)
+					rand_nsfw = random.choice(subs)
+					if rand_nsfw.is_self:
+						pass
+					else:
+						if rand_nsfw.title not in imgs:
+							channel = await get(bot, interactions.Channel, channel_id=row)
+							await channel.set_nsfw(nsfw=True)
+							embed = interactions.Embed(title=rand_nsfw.title, description=rand_nsfw.selftext)
+							embed.set_image(url=rand_nsfw.url)
+							embed.set_author(name=f"/{next_subred} (hot)")
+							await channel.send(embeds=embed)
+							imgs.append(rand_nsfw.title)
 					nsfw = await reddit.subreddit(next_subred)
-					nsfw = nsfw.hot(limit=1)
+					nsfw = nsfw.new(limit=1)
 					item = await nsfw.__anext__()
 					if item.title not in imgs:
-						channel = await get(bot, interactions.Channel, channel_id=row)
-						await channel.modify(nsfw=True)
-						embed = interactions.Embed(title=item.title)
-						embed.set_image(url=item.url)
-						imgs.append(item.title)
-						embed.set_author(name=f"/{next_subred}")
-						await channel.send(embeds=embed)
-					else:
-						nsfw = await reddit.subreddit(next_subred)
-						nsfw = nsfw.new(limit=1)
-						item = await nsfw.__anext__()
-						if item.title not in imgs:
+						if item.is_self:
+							pass
+						else:
 							channel = await get(bot, interactions.Channel, channel_id=row)
-							await channel.modify(nsfw=True)
+							await channel.set_nsfw(nsfw=True)
 							embed = interactions.Embed(title=item.title)
 							embed.set_image(url=item.url)
-							imgs.append(item.title)
-							embed.set_author(name=f"/{next_subred}")
+							embed.set_author(name=f"/{next_subred} (newest)")
 							await channel.send(embeds=embed)
+		imgs.append(item.title)
 		
 		
 
