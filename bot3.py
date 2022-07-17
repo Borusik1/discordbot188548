@@ -106,7 +106,7 @@ async def on_start():
 							url = "https://www.reddit.com/"+rand_nsfw.permalink
 							channel = await get(bot, interactions.Channel, channel_id=row)
 							await channel.set_nsfw(nsfw=True)
-							embed = interactions.Embed(title=f"[{rand_nsfw.title}]({url})")
+							embed = interactions.Embed(title=rand_nsfw.title, description=f"Link: {url}")
 							embed.set_image(url=rand_nsfw.url)
 							embed.set_author(name=f"/{next_subred} (hot)")
 							await channel.send(embeds=embed)
@@ -121,7 +121,7 @@ async def on_start():
 							url = "https://www.reddit.com/"+item.permalink
 							channel = await get(bot, interactions.Channel, channel_id=row)
 							await channel.set_nsfw(nsfw=True)
-							embed = interactions.Embed(title=f"[{rand_nsfw.title}]({url})")
+							embed = interactions.Embed(title=item.title, description=f"Link: {url}")
 							embed.set_image(url=item.url)
 							embed.set_author(name=f"/{next_subred} (newest)")
 							await channel.send(embeds=embed)
