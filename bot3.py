@@ -65,7 +65,7 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS counter (
 #	print(row)
 
 @bot.event
-async def on_ready():
+async def on_start():
 	await bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.GAME)]))
 	await asyncio.sleep(2)
 	for guild in bot.guilds:
@@ -84,24 +84,38 @@ async def on_ready():
 	print("Bot Has been runned")
 	print(f"Ping: {bot.latency}")
 	subred = cycle(subreddits)
-	if True:
+	while True:
+		next_subred = next(subred)
 		await asyncio.sleep(10)
 		for guild in bot.guilds:
 			guild1 = int(guild.id)
 			cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
-			for row in cursor.fetchone():
-				next_subred = next(subred)
-				nsfw = await reddit.subreddit(next_subred)
-				nsfw = nsfw.new(limit=1)
-				item = await nsfw.__anext__()
-				if item.title not in imgs:
-					channel = await get(bot, interactions.Channel, channel_id=row)
-					if channel.nsfw == True:
+			if cursor.fetchone()!=None:
+				cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
+				for row in cursor.fetchone():
+					nsfw = await reddit.subreddit(next_subred)
+					nsfw = nsfw.hot(limit=1)
+					item = await nsfw.__anext__()
+					if item.title not in imgs:
+						channel = await get(bot, interactions.Channel, channel_id=row)
+						await channel.modify(nsfw=True)
 						embed = interactions.Embed(title=item.title)
 						embed.set_image(url=item.url)
 						imgs.append(item.title)
-						embed.set_author(name="Рассылка с реддита")
+						embed.set_author(name=f"/{next_subred}")
 						await channel.send(embeds=embed)
+					else:
+						nsfw = await reddit.subreddit(next_subred)
+						nsfw = nsfw.new(limit=1)
+						item = await nsfw.__anext__()
+						if item.title not in imgs:
+							channel = await get(bot, interactions.Channel, channel_id=row)
+							await channel.modify(nsfw=True)
+							embed = interactions.Embed(title=item.title)
+							embed.set_image(url=item.url)
+							imgs.append(item.title)
+							embed.set_author(name=f"/{next_subred}")
+							await channel.send(embeds=embed)
 		
 		
 
@@ -228,6 +242,7 @@ async def cmd(ctx, sub_command: str, channel = None, category = None):
 			else:
 				cursor.execute('UPDATE status SET arg=%s, status=%s where id=%s and guild=%s', (channel1, True,  2, guild))
 			connection.commit()
+			await channel.modify(nsfw=True)
 			await ctx.send(embeds=interactions.Embed(color=0x14e34b, description=f"Канал для получения запросов успешно настроен на {channel.mention}"))
 		else:
 			await ctx.send("Канал не текствого типа")
