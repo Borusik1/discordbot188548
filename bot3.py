@@ -250,7 +250,6 @@ async def cmd(ctx, sub_command: str, channel = None, category = None):
 			else:
 				cursor.execute('UPDATE status SET arg=%s, status=%s where id=%s and guild=%s', (channel1, True,  2, guild))
 			connection.commit()
-			await channel.modify(nsfw=True)
 			await ctx.send(embeds=interactions.Embed(color=0x14e34b, description=f"Канал для получения запросов успешно настроен на {channel.mention}"))
 		else:
 			await ctx.send("Канал не текствого типа")
