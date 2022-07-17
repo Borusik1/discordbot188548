@@ -4,3 +4,4 @@ git+https://github.com/interactions-py/library.git@unstable
 interactions-get
 asyncpraw
 git+https://github.com/interactions-py/enhanced
+colorama
