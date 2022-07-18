@@ -5,4 +5,4 @@ interactions-get
 asyncpraw
 git+https://github.com/interactions-py/enhanced
 colorama
-interactions-checks==0.0.1
+git+https://github.com/Catalyst4222/interactions-checks.git
