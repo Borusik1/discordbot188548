@@ -4,6 +4,7 @@ from aiohttp import request
 import interactions
 from interactions.ext.get import get
 from interactions.ext.enhanced import cooldown
+from interactions.ext.checks import is_owner, guild_only
 import json
 from tabulate import tabulate
 import asyncio
@@ -218,6 +219,7 @@ async def on_guild_member_add(member):
 		),
 	],
 )
+@guild_only()
 async def cmd(ctx, sub_command: str, channel = None, category = None):
 	await ctx.defer()
 	guild = int(ctx.guild_id)
@@ -317,6 +319,7 @@ async def cmd(ctx, sub_command: str, channel = None, category = None):
 		),
 	],
 )
+@guild_only()
 async def ticket(ctx, sub_command: str, user = None):
 	member = user
 	await ctx.defer()
@@ -537,6 +540,7 @@ async def ticket(ctx, sub_command: str, user = None):
 		required=False,
 	),]
 )
+@guild_only()
 async def destroy(ctx, channel = None):
 	if channel == None:
 		channel = await ctx.get_channel()
@@ -621,6 +625,7 @@ async def vip(ctx, sub_command: str):
 		),
 	],
 )
+@guild_only()
 async def balance(ctx, user = None):
 	pass
 
@@ -635,6 +640,7 @@ button = interactions.Button(
     description="Установить запрос на сделки",
 	default_member_permissions=interactions.Permissions.ADMINISTRATOR,
 )
+@guild_only()
 async def setup(ctx):
 	await ctx.defer()
 	cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (2, int(ctx.guild_id)))
