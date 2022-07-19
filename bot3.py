@@ -2,7 +2,6 @@ from unicodedata import category
 import random
 from aiohttp import request
 import interactions
-from interactions.ext.get import get
 from interactions.ext.enhanced import cooldown
 from interactions.ext.checks import is_owner, guild_only
 import json
