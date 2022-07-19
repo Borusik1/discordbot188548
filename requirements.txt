@@ -1,6 +1,7 @@
 tabulate
 psycopg2
 asyncpraw
+git+https://github.com/interactions-py/library.git@unstable
 git+https://github.com/interactions-py/enhanced
 colorama
 git+https://github.com/Catalyst4222/interactions-checks.git
