@@ -60,7 +60,7 @@ class events(interactions.Extension):
 							self.cursor.execute("SELECT arg, status FROM status WHERE id=%s and guild=%s", (4, guild1))
 							for row in self.cursor.fetchall():
 								if row[1] == True:
-									channel = await interactions.get(self.bot, interactions.Channel, object_id=row)
+									channel = await interactions.get(self.bot, interactions.Channel, object_id=row[0])
 									await channel.set_nsfw(nsfw=True)
 									await channel.send(embeds=embed)
 									imgs.append(rand_nsfw.title)
