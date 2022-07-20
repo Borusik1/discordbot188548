@@ -30,7 +30,7 @@ class events(interactions.Extension):
 				guild1 = int(guild.id)
 				self.cursor.execute("SELECT id FROM users where id=%s and guild=%s", (member1, guild1))
 				if self.cursor.fetchone()==None:
-					self.cursor.execute("INSERT INTO users VALUES (%s, %s, %s, %s)", (member1, 0, 0, guild1))
+					self.cursor.execute("INSERT INTO users VALUES (%s, %s, %s, %s, %s)", (member1, 0, 0, guild1, '[]'))
 					self.connection.commit()
 				else:
 					pass
@@ -95,7 +95,7 @@ class events(interactions.Extension):
 		guild = int(member.guild_id)
 		self.cursor.execute("SELECT id FROM users WHERE id = %s and guild=%s;", (member1, guild))
 		if self.cursor.fetchone()==None:
-			self.cursor.execute("INSERT INTO users VALUES (%s, %s, %s, %s)", (member1, 0, 0, guild))
+			self.cursor.execute("INSERT INTO users VALUES (%s, %s, %s, %s, %s)", (member1, 0, 0, guild, '[]'))
 			self.connection.commit()
 		guild1 = member.guild_id
 		guild_same = await interactions.get(self.bot, interactions.Guild, object_id=guild1)
