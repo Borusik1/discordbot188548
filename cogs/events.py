@@ -55,14 +55,16 @@ class events(interactions.Extension):
 					embed.set_author(name=f"/{rand_nsfw.subreddit} (hot)")
 					for guild in self.bot.guilds:
 						guild1 = int(guild.id)
-						self.cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
+						self.cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (4, guild1))
 						if self.cursor.fetchone()!=None:
-							self.cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
-							for row in self.cursor.fetchone():
-								channel = await interactions.get(self.bot, interactions.Channel, object_id=row)
-								await channel.set_nsfw(nsfw=True)
-								await channel.send(embeds=embed)
-								imgs.append(rand_nsfw.title)
+							self.cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (4, guild1))
+							if self.cursor.fetchone()==True:
+								self.cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
+								for row in self.cursor.fetchone():
+									channel = await interactions.get(self.bot, interactions.Channel, object_id=row)
+									await channel.set_nsfw(nsfw=True)
+									await channel.send(embeds=embed)
+									imgs.append(rand_nsfw.title)
 			nsfw = await self.reddit.subreddit(next_subred)
 			nsfw = nsfw.new(limit=1)
 			item = await nsfw.__anext__()
@@ -76,14 +78,16 @@ class events(interactions.Extension):
 					embed.set_author(name=f"/{item.subreddit} (newest)")
 					for guild in self.bot.guilds:
 						guild1 = int(guild.id)
-						self.cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
+						self.cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (4, guild1))
 						if self.cursor.fetchone()!=None:
-							self.cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
-							for row in self.cursor.fetchone():
-								channel = await interactions.get(self.bot, interactions.Channel, object_id=row)
-								await channel.set_nsfw(nsfw=True)
-								await channel.send(embeds=embed)
-								imgs.append(item.title)
+							self.cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (4, guild1))
+							if self.cursor.fetchone()==True:
+								self.cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
+								for row in self.cursor.fetchone():
+									channel = await interactions.get(self.bot, interactions.Channel, object_id=row)
+									await channel.set_nsfw(nsfw=True)
+									await channel.send(embeds=embed)
+									imgs.append(item.title)
 			
 			
 
