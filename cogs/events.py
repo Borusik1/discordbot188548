@@ -57,10 +57,9 @@ class events(interactions.Extension):
 						guild1 = int(guild.id)
 						self.cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (4, guild1))
 						if self.cursor.fetchone()!=None:
-							self.cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (4, guild1))
-							if self.cursor.fetchone()==True:
-								self.cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
-								for row in self.cursor.fetchone():
+							self.cursor.execute("SELECT arg, status FROM status WHERE id=%s and guild=%s", (4, guild1))
+							for row in self.cursor.fetchall():
+								if row[1] == True:
 									channel = await interactions.get(self.bot, interactions.Channel, object_id=row)
 									await channel.set_nsfw(nsfw=True)
 									await channel.send(embeds=embed)
@@ -80,11 +79,10 @@ class events(interactions.Extension):
 						guild1 = int(guild.id)
 						self.cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (4, guild1))
 						if self.cursor.fetchone()!=None:
-							self.cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (4, guild1))
-							if self.cursor.fetchone()==True:
-								self.cursor.execute("SELECT arg FROM status WHERE id=%s and guild=%s", (4, guild1))
-								for row in self.cursor.fetchone():
-									channel = await interactions.get(self.bot, interactions.Channel, object_id=row)
+							self.cursor.execute("SELECT arg, status FROM status WHERE id=%s and guild=%s", (4, guild1))
+							for row in self.cursor.fetchall():
+								if row[1] == True:
+									channel = await interactions.get(self.bot, interactions.Channel, object_id=row[0])
 									await channel.set_nsfw(nsfw=True)
 									await channel.send(embeds=embed)
 									imgs.append(item.title)
