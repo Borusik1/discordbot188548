@@ -54,7 +54,7 @@ class requests(interactions.Extension):
 					label="ID участника с которым сделка",
 					custom_id="text_input_response",
 					min_length=18,
-					max_length=18,
+					max_length=19,
 					required=True,
 				),
 				interactions.TextInput(
@@ -76,7 +76,7 @@ class requests(interactions.Extension):
 		await ctx.popup(modal)
 
 	@interactions.extension_modal("request_form")
-	@cooldown(seconds=600, error=cooldown_error_form, type="user")
+	@cooldown(seconds=600, error=cooldown_error_form, type="member")
 	async def modal_response(self, ctx, response = str, response2 = str, response3 = None):
 		await ctx.defer(ephemeral=True)
 		try:

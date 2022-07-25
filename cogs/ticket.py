@@ -28,8 +28,8 @@ class ticket(interactions.Extension):
 						description="Участник которого желаете добавить",
 						type=interactions.OptionType.USER,
 						required=True,
-				),
-			],
+					),
+				],
 			),
 			interactions.Option(
 				name="kick",
@@ -41,8 +41,8 @@ class ticket(interactions.Extension):
 						description="Участник которого желаете удалить",
 						type=interactions.OptionType.USER,
 						required=True,
-				),
-			]
+					),
+				]
 			),
 			interactions.Option(
 				name="close",

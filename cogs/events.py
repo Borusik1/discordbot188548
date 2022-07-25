@@ -4,6 +4,10 @@ from itertools import cycle
 import asyncpraw
 import asyncio
 import random
+import json
+import time
+
+
 
 imgs = []
 subreddits = ['hentai', 'porn', "nsfw", "hentaibondage", "yuri", "YuriHentai", "HentaiAnal"]
@@ -15,7 +19,6 @@ class events(interactions.Extension):
 		self.connection = connection
 		self.cursor = cursor
 		self.reddit = reddit
-
 
 	@interactions.extension_listener
 	async def on_start(self):
@@ -62,7 +65,10 @@ class events(interactions.Extension):
 								if row[1] == True:
 									channel = await interactions.get(self.bot, interactions.Channel, object_id=row[0])
 									await channel.set_nsfw(nsfw=True)
-									await channel.send(embeds=embed)
+									try:
+										await channel.send(embeds=embed)
+									except:
+										pass
 									imgs.append(rand_nsfw.title)
 			nsfw = await self.reddit.subreddit(next_subred)
 			nsfw = nsfw.new(limit=1)
@@ -84,10 +90,11 @@ class events(interactions.Extension):
 								if row[1] == True:
 									channel = await interactions.get(self.bot, interactions.Channel, object_id=row[0])
 									await channel.set_nsfw(nsfw=True)
-									await channel.send(embeds=embed)
+									try:
+										await channel.send(embeds=embed)
+									except:
+										pass
 									imgs.append(item.title)
-			
-			
 
 	@interactions.extension_listener
 	async def on_guild_member_add(self, member):
@@ -109,5 +116,150 @@ class events(interactions.Extension):
 				await channel.send(f"Привет дружище <@{member.id}>!", embeds=embed)
 			else:
 				pass
+
+	@interactions.extension_listener
+	async def on_message_create(self, message):
+		try:
+			self.cursor.execute("SELECT values FROM message_response WHERE id=%s and author=%s and guild=%s", (1, int(message.author.id), int(message.guild_id)))
+			if self.cursor.fetchone()!=None:
+				self.cursor.execute("SELECT step, status, values, channel, time, message FROM message_response WHERE id=%s and author=%s and guild=%s", (1, int(message.author.id), int(message.guild_id)))
+				for row in self.cursor.fetchall():
+					if row[3]==int(message.channel_id):
+						if row[1]==True:
+							now = int(time.time())
+							channel = await interactions.get(self.bot, interactions.Channel, object_id=row[3])
+							if now < row[4]:
+								step = row[0]
+								values = json.loads(row[2])
+								message_ed = await channel.get_message(row[5])
+								field = message_ed.embeds[0].fields[-1]
+								embed =  message_ed.embeds[0]
+								context = message.content
+								if step==0:
+									values.append(message.content)
+									encoded = json.dumps(values)
+									step +=1
+									self.cursor.execute("UPDATE message_response SET step=%s, values=%s WHERE id=%s and author=%s and guild=%s", (step, encoded, 1, int(message.author.id), int(message.guild_id)))
+									field.value = context
+									embed.add_field(
+										name="ID предмета:",
+										value="**Введите ID предмета, рекомендую использовать легко запоминающийся 1-2х значные цифры**",
+										inline=False
+									)
+								elif step==1:
+									try:
+										i_id = int(message.content)
+									except:
+										await channel.send("Id не в цифровом формате")
+									else:
+										if i_id >= 0:
+											values.append(i_id)
+											encoded = json.dumps(values)
+											step +=1
+											self.cursor.execute("UPDATE message_response SET step=%s, values=%s WHERE id=%s and author=%s and guild=%s", (step, encoded, 1, int(message.author.id), int(message.guild_id)))
+											field.value = context
+											embed.add_field(
+												name="Будет ли предмет продаваться в магазине?",
+												value="**Да \ Нет**",
+												inline=False
+											)
+										else:
+											await channel.send("Id не может быть отрицательным значением")
+								elif step==2:
+									if context.upper() == "ДА":
+										values.append(True)
+										encoded = json.dumps(values)
+										step +=1
+										self.cursor.execute("UPDATE message_response SET step=%s, values=%s WHERE id=%s and author=%s and guild=%s", (step, encoded, 1, int(message.author.id), int(message.guild_id)))
+										field.value = context
+										embed.add_field(
+											name="Цена предмета:",
+											value="Введи цену",
+											inline=False
+										)			
+									elif context.upper() == "НЕТ":
+										values.append(False)
+										values.append(None)
+										encoded = json.dumps(values)
+										step +=2
+										self.cursor.execute("UPDATE message_response SET step=%s, values=%s WHERE id=%s and author=%s and guild=%s", (step, encoded, 1, int(message.author.id), int(message.guild_id)))
+										field.value = context
+										embed.add_field(
+											name="Можно ли использовать предмет?",
+											value="Да / Нет",
+											inline=False
+										)
+									else:
+										await channel.send("Только Да / Нет")
+								elif step==3:
+									try:
+										i_cost = int(context)
+									except:
+										await channel.send("Цена не в цифровом формате")
+									else:
+										if i_cost > 0:
+											values.append(i_cost)
+											encoded = json.dumps(values)
+											step +=1
+											self.cursor.execute("UPDATE message_response SET step=%s, values=%s WHERE id=%s and author=%s and guild=%s", (step, encoded, 1, int(message.author.id), int(message.guild_id)))
+											field.value = context
+											embed.add_field(
+												name="Можно ли использовать предмет?",
+												value="Да / Нет",
+												inline=False
+											)
+										else:
+											await channel.send("Цена должна быть больше 0")
+								elif step==4:
+									if context.upper() == "ДА":
+										values.append(True)
+										encoded = json.dumps(values)
+										step +=1
+										self.cursor.execute("UPDATE message_response SET step=%s, values=%s WHERE id=%s and author=%s and guild=%s", (step, encoded, 1, int(message.author.id), int(message.guild_id)))
+										field.value = context
+										embed.add_field(
+											name="Введите роль которая будет выдаваться при использовании:",
+											value="Упомяни @Роль или введи ID",
+											inline=False
+										)			
+									elif context.upper() == "НЕТ":
+										values.append(False)
+										values.append(None)
+										self.cursor.execute("UPDATE message_response SET time=%s, step=%s, status=%s, values=%s, channel=%s, message=%s WHERE id=%s and author=%s and guild=%s", (None, 0, False, '[]', None, None, 1, int(message.author.id), int(message.guild_id)))
+										field.value = context
+										self.cursor.execute("INSERT INTO items VALUES (%s, %s, %s, %s, %s, %s, %s)", (values[0], values[1], values[2], values[3], values[4], values[5], int(message.guild_id)))
+										await channel.send("Конфигурация окончена")
+									else:
+										await channel.send("Только Да / Нет")
+								elif step==5:
+									if message.mention_roles:
+										role = message.mention_roles[0]
+										role1 = int(role)
+									elif message.content.isdigit():
+										role = message.content
+										try:
+											role_ob= await interactions.get(self.bot, interactions.Role, object_id=role)
+											role1 = int(role_ob.id)
+										except:
+											role1 =None
+											await channel.send("Это не роль")
+									else:
+										role1 = None
+										await channel.send("Это не роль")
+									if role1:
+										values.append(role1)
+										self.cursor.execute("UPDATE message_response SET time=%s, step=%s, status=%s, values=%s, channel=%s, message=%s WHERE id=%s and author=%s and guild=%s", (None, 0, False, '[]', None, None, 1, int(message.author.id), int(message.guild_id)))
+										field.value = f"<@&{role1}>"
+										self.cursor.execute("SELECT name FROM items WHERE id=%s and guild=%s", (values[1], int(message.guild_id)))
+										if self.cursor.fetchone()==None:
+											self.cursor.execute("INSERT INTO items VALUES (%s, %s, %s, %s, %s, %s, %s)", (values[0], values[1], values[2], values[3], values[4], values[5], int(message.guild_id)))
+											await channel.send("Конфигурация окончена")
+										else:
+											await channel.send("Такой предмет уже существует")
+								await message_ed.edit(embeds=embed)
+								self.connection.commit()
+		except:
+			pass
+
 def setup(bot: interactions.Client, **kwargs):
 	events(bot, **kwargs)
