@@ -22,7 +22,7 @@ class events(interactions.Extension):
 
 	@interactions.extension_listener
 	async def on_start(self):
-		await self.bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.WATCHING)]))
+		await self.bot.change_presence(interactions.ClientPresence(activities=[interactions.PresenceActivity(name="только slash-commands", type=interactions.PresenceActivityType.WATCHING)._json]))
 		await asyncio.sleep(2)
 		for guild in self.bot.guilds:
 			await asyncio.sleep(2)
