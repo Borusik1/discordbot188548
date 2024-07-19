@@ -54,20 +54,7 @@ class set(interactions.Extension):
 
 				],
 			),
-			interactions.Option(
-				name="nsfw",
-				description="Установить канал для NSFW(18+) рассылки",
-				type=interactions.OptionType.SUB_COMMAND,
-				options=[
-					interactions.Option(
-						name="channel",
-						description="Канал на который установить",
-						type=interactions.OptionType.CHANNEL,
-						required=True,
-					),
-
-				],
-			),
+			
 		],
 	)
 	@guild_only()
