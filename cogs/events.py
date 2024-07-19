@@ -9,9 +9,7 @@ import time
 
 
 
-imgs = []
-subreddits = ['hentai', 'porn', "nsfw", "hentaibondage", "yuri", "YuriHentai", "HentaiAnal"]
-subs= []
+
 
 class events(interactions.Extension):
 	def __init__(self, bot, connection, cursor, reddit, **kwargs):
@@ -40,61 +38,7 @@ class events(interactions.Extension):
 		print("Bot Has been runned")
 		print(f"Ping: {self.bot.latency}")
 		subred = cycle(subreddits)
-		while True:
-			next_subred = next(subred)
-			await asyncio.sleep(20)
-			nsfw1 = await self.reddit.subreddit(next_subred)
-			if not subs:
-				async for nsfw in nsfw1.hot(limit=300):
-					subs.append(nsfw)
-			rand_nsfw = random.choice(subs)
-			if rand_nsfw.is_self:
-				pass
-			else:
-				if rand_nsfw.title not in imgs:
-					url = "https://www.reddit.com"+rand_nsfw.permalink
-					embed = interactions.Embed(title=rand_nsfw.title, description=f"Link: {url}")
-					embed.set_image(url=rand_nsfw.url)
-					embed.set_author(name=f"/{rand_nsfw.subreddit} (hot)")
-					for guild in self.bot.guilds:
-						guild1 = int(guild.id)
-						self.cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (4, guild1))
-						if self.cursor.fetchone()!=None:
-							self.cursor.execute("SELECT arg, status FROM status WHERE id=%s and guild=%s", (4, guild1))
-							for row in self.cursor.fetchall():
-								if row[1] == True:
-									channel = await interactions.get(self.bot, interactions.Channel, object_id=row[0])
-									await channel.set_nsfw(nsfw=True)
-									try:
-										await channel.send(embeds=embed)
-									except:
-										pass
-									imgs.append(rand_nsfw.title)
-			nsfw = await self.reddit.subreddit(next_subred)
-			nsfw = nsfw.new(limit=1)
-			item = await nsfw.__anext__()
-			if item.title not in imgs:
-				if item.is_self:
-					pass
-				else:
-					url = "https://www.reddit.com"+item.permalink
-					embed = interactions.Embed(title=item.title, description=f"Link: {url}")
-					embed.set_image(url=item.url)
-					embed.set_author(name=f"/{item.subreddit} (newest)")
-					for guild in self.bot.guilds:
-						guild1 = int(guild.id)
-						self.cursor.execute("SELECT status FROM status WHERE id=%s and guild=%s", (4, guild1))
-						if self.cursor.fetchone()!=None:
-							self.cursor.execute("SELECT arg, status FROM status WHERE id=%s and guild=%s", (4, guild1))
-							for row in self.cursor.fetchall():
-								if row[1] == True:
-									channel = await interactions.get(self.bot, interactions.Channel, object_id=row[0])
-									await channel.set_nsfw(nsfw=True)
-									try:
-										await channel.send(embeds=embed)
-									except:
-										pass
-									imgs.append(item.title)
+		
 
 	@interactions.extension_listener
 	async def on_guild_member_add(self, member):
