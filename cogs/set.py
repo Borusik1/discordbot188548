@@ -101,17 +101,5 @@ class set(interactions.Extension):
 				await ctx.send(embeds=interactions.Embed(color=0x14e34b, description=f"Канал для получения запросов успешно настроен на {channel.mention}"))
 			else:
 				await ctx.send("Канал не текствого типа")
-		elif sub_command=="nsfw":
-			channel1 = int(channel.id)
-			if channel.type == interactions.ChannelType.GUILD_TEXT:
-				self.cursor.execute("SELECT id FROM status where id=%s and guild=%s", (4, guild))
-				if self.cursor.fetchone()==None:
-					self.cursor.execute("INSERT INTO status VALUES (%s, %s, %s, %s)", (4, True, channel1, guild))
-				else:
-					self.cursor.execute('UPDATE status SET arg=%s, status=%s where id=%s and guild=%s', (channel1, True,  4, guild))
-				self.connection.commit()
-				await ctx.send(embeds=interactions.Embed(color=0x14e34b, description=f"Канал для получения NSFW(18+) рассылки успешно настроен на {channel.mention}"))
-			else:
-				await ctx.send("Канал не текствого типа")
 def setup(bot: interactions.Client, **kwargs):
 	set(bot, **kwargs)
